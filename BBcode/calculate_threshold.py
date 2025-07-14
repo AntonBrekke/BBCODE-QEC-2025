@@ -80,11 +80,11 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                     ],
                 },
                 'decoder': {
-                    # 'name': 'MatchingDecoder',  #  Class name of the decoder
-                    'name': 'BeliefPropagationOSDDecoder',  #  Class name of the decoder
-                    # 'parameters': [{}]
-                    'parameters': [{'max_bp_iter': max_bp_iter, 'osd_order': 10, 
-                                    'channel_update': False, 'bp_method': 'minimum_sum'}]
+                    'name': 'MatchingDecoder',  #  Class name of the decoder
+                    # 'name': 'BeliefPropagationOSDDecoder',  #  Class name of the decoder
+                    'parameters': [{}]
+                    # 'parameters': [{'max_bp_iter': max_bp_iter, 'osd_order': 10, 
+                                    # 'channel_update': False, 'bp_method': 'minimum_sum'}]
                 },
                 'error_rate': p.tolist()  #  List of physical error rates
             }
@@ -106,7 +106,9 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     return analysis, filename 
 
 
-def plot_thresholds(analysis, savefig: bool=False):
+def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
+    if filename is None:
+        filename = 'figures/no_filename.pdf'
     ### Plot resulting data 
     plt.style.use('seaborn-v0_8')
     # Comment back in to get LaTeX font 
@@ -162,8 +164,8 @@ def plot_thresholds(analysis, savefig: bool=False):
     ms = 5
     for Ls in code_params:
         Lx, Ly, Lz = Ls.values()
-        code = BBcode.BBcode_A312_B312(Lx, Ly)
-        k = code.num_logical_qubits
+        code = eval('BBcode.' + results['code'][0] + f'({Lx}, {Ly})')
+        k = code.num_logical_qubits 
         index = results['code_params'] == Ls
         ax[0].errorbar(results[index]['error_rate'], results[index]['p_est'], results[index]['p_se'],
                     label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$', capsize=capsize, marker='o', ms=ms)
@@ -223,9 +225,9 @@ def plot_thresholds(analysis, savefig: bool=False):
 
 analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
                                n_trials=1e3, 
-                               grids=[{'L_x':9,'L_y':9},
-                                      {'L_x': 12,'L_y':12},
-                                      {'L_x': 15,'L_y':15}],
+                               grids=[{'L_x':10,'L_y':10},
+                                      {'L_x': 20,'L_y':20},
+                                      {'L_x': 30,'L_y':30}],
                                p_range=(1e-3, 0.25, 40),
                                r=(1/3, 1/3, 1/3),
                                max_bp_iter=1000)
