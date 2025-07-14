@@ -1,1 +1,1 @@
-"# NSM-QEC-2025" 
+# Implementation of BB-code
