@@ -80,11 +80,11 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                     ],
                 },
                 'decoder': {
-                    'name': 'MatchingDecoder',  #  Class name of the decoder
-                    # 'name': 'BeliefPropagationOSDDecoder',  #  Class name of the decoder
-                    'parameters': [{}]
-                    # 'parameters': [{'max_bp_iter': max_bp_iter, 'osd_order': 10, 
-                                    # 'channel_update': False, 'bp_method': 'minimum_sum'}]
+                    # 'name': 'MatchingDecoder',  #  Class name of the decoder
+                    'name': 'BeliefPropagationOSDDecoder',  #  Class name of the decoder
+                    # 'parameters': [{}]
+                    'parameters': [{'max_bp_iter': max_bp_iter, 'osd_order': 10, 
+                                    'channel_update': False, 'bp_method': 'minimum_sum'}]
                 },
                 'error_rate': p.tolist()  #  List of physical error rates
             }
@@ -191,6 +191,8 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     pth_str_2 = r'$p_{\rm th}' + f' = ({100*result_X["p_th_fss"][0]:.2f}' + '\pm' + f'{100*result_X["p_th_fss_se"][0]:.2f})\%$'
     pth_str_3 = r'$p_{\rm th}' + f' = ({100*result_Z["p_th_fss"][0]:.2f}' + '\pm' + f'{100*result_Z["p_th_fss_se"][0]:.2f})\%$'
 
+    # ax[0].set_xscale('log')
+    # ax[0].set_yscale('log')
     ax[0].set_ylim(ymax=1.1)
 
     ax[0].set_title('All errors')
@@ -213,24 +215,24 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     if savefig: plt.savefig(filename)
     plt.show()
 
-# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
-#                                n_trials=5e2, 
-#                                grids=[{'L_x':6,'L_y':6},
-#                                       {'L_x': 9,'L_y':6},
-#                                       {'L_x': 12,'L_y':6},
-#                                       {'L_x': 15,'L_y':6}],
-#                                p_range=(1e-3, 0.25, 40),
-#                                r=(1/3, 1/3, 1/3),
-#                                max_bp_iter=1000)
-
-analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
+analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
                                n_trials=1e3, 
-                               grids=[{'L_x':10,'L_y':10},
-                                      {'L_x': 20,'L_y':20},
-                                      {'L_x': 30,'L_y':30}],
-                               p_range=(1e-3, 0.25, 40),
+                               grids=[{'L_x':6,'L_y':6},
+                                      {'L_x': 9,'L_y':6},
+                                      {'L_x': 12,'L_y':6},
+                                      {'L_x': 15,'L_y':6}],
+                               p_range=(0, 0.25, 60),
                                r=(1/3, 1/3, 1/3),
                                max_bp_iter=1000)
+
+# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
+#                                n_trials=1e3, 
+#                                grids=[{'L_x':10,'L_y':10},
+#                                       {'L_x': 20,'L_y':20},
+#                                       {'L_x': 30,'L_y':30}],
+#                                p_range=(1e-3, 0.25, 60),
+#                                r=(1/3, 1/3, 1/3),
+#                                max_bp_iter=1000)
 plot_thresholds(analysis, savefig=True, filename=filename.replace('data', 'figures').replace('.json', '.pdf'))
 
 
