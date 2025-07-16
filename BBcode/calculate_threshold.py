@@ -1,5 +1,6 @@
 import BBcode_classes as BBcode
-from panqec.simulation._batch_simulation import CODES
+from BP_LSD import BeliefPropagationLSDDecoder
+from panqec.config import CODES, DECODERS
 import numpy as np
 import os 
 from tqdm import tqdm
@@ -11,20 +12,19 @@ import matplotlib.pyplot as plt
 This file calculates the error threshold given a BBCode class from 'BBcode_classes.py'. 
 """
 
-
-
-
 ### Calculate threshold and get error-rate plot 
 from panqec.simulation import read_input_dict
 from panqec.analysis import Analysis
 
 
-def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric, 
+def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
+                        decoder_dict: dict = {'name': 'BeliefPropagationLSDDecoder',  #  Class name of the decoder
+                                              'parameters': [{'max_bp_iter': 1e3, 'lsd_order': 10, 
+                                              'channel_update': False, 'bp_method': 'minimum_sum'}]}, 
                         n_trials: int=1e2, 
                         grids: list[dict]=[{'L_x':10,'L_y':10}],
                         p_range: tuple=(0.1, 0.25, 40),
-                        r: tuple=(1/3, 1/3, 1/3),
-                        max_bp_iter: int=1000
+                        r: tuple=(1/3, 1/3, 1/3)
                         ):
 
     n_trials = int(n_trials)  # Ensure n_trials is an integer
@@ -37,6 +37,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     # code_class = BBcode.BBcode_ArXiV_example
     code_class = BBclass
     code_name = code_class.__name__
+    decoder_name = decoder_dict['name']
 
     # Check if parity checks we implement are the same as in PanQEC 
     test_code = code_class(4,4)
@@ -46,14 +47,20 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     print(np.all(test_code.HZ == test_code.Hz.toarray()))
 
     # Must register the new code in panQEC 
-    CODES['AntonBB2DCode'] = code_class
+    CODES[f'{code_name}'] = code_class
+    DECODERS['BeliefPropagationLSDDecoder'] = BeliefPropagationLSDDecoder
 
     save_frequency = 10  # Frequency of saving to file
     n_trials_str = f'{n_trials:.0e}'.replace('+0', '')
-    grids_str = f'{grids}'.replace(' ', '').replace(':',';')
+    grids_str = f'{grids}'.replace(' ', '').replace(':',';').replace(':', ';').replace("'", "")
     p_range_str = f'{p_range}'.replace(' ', '')
     r_tup_str =  f'({r[0]:.1f},' + f'{r[1]:.1f},' + f'{r[2]:.1f})'
-    filename = f'data/{code_name};n_trials;{n_trials_str};grids;{grids_str};p_range;{p_range_str};r;{r_tup_str};max_bp_iter;{max_bp_iter:.0e}.json'
+    decoder_dict_str = f'{decoder_dict}'.replace(' ', '').replace(':', ';').replace("'", "")
+    filename = f"data\{code_name};n_trials;{n_trials_str};grids;{grids_str};p_range;{p_range_str};r;{r_tup_str};decoder;{decoder_dict_str}.json"
+
+    # This magically fixes the fact that the filename is too long... 
+    filename = u"\\\\?\\" + os.path.abspath(filename)
+
     rewrite_data = True
     if os.path.exists(filename):
         advance = False
@@ -70,7 +77,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
             'ranges': {
                 'label': 'BB 2D Experiment',  # Can be any name you want
                 'code': {
-                    'name': 'AntonBB2DCode',  # Class name of the code
+                    'name': f'{code_name}',  # Class name of the code
                     'parameters': grids  # List of dictionaries with code parameters
                 },
                 'error_model': {
@@ -79,13 +86,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                         {'r_x': r_x, 'r_y': r_y, 'r_z': r_z}  #  Ratios of X, Y and Z errors
                     ],
                 },
-                'decoder': {
-                    # 'name': 'MatchingDecoder',  #  Class name of the decoder
-                    'name': 'BeliefPropagationOSDDecoder',  #  Class name of the decoder
-                    # 'parameters': [{}]
-                    'parameters': [{'max_bp_iter': max_bp_iter, 'osd_order': 10, 
-                                    'channel_update': False, 'bp_method': 'minimum_sum'}]
-                },
+                'decoder': decoder_dict,
                 'error_rate': p.tolist()  #  List of physical error rates
             }
         }
@@ -97,7 +98,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
         # We create a BatchSimulation by reading the input dictionary
         batch_sim = read_input_dict(
             input_data,
-            output_file=filename,  # Where to store the simulation results
+            output_file=filename  # Where to store the simulation results
             # save_frequency=save_frequency
         ) 
 
@@ -132,7 +133,6 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
 
     plt.sca(ax[0])
     analysis.plot_thresholds()
-    ax0_lines = ax[0].get_lines()
     plt.sca(ax[1])
     analysis.plot_thresholds(sector='X')
     plt.sca(ax[2])
@@ -162,18 +162,41 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
 
     capsize = 5
     ms = 5
+    legend_lines = []
+    legend_labels = []
     for Ls in code_params:
         Lx, Ly, Lz = Ls.values()
         code = eval('BBcode.' + results['code'][0] + f'({Lx}, {Ly})')
-        k = code.num_logical_qubits 
         index = results['code_params'] == Ls
-        ax[0].errorbar(results[index]['error_rate'], results[index]['p_est'], results[index]['p_se'],
+        k = code.num_logical_qubits 
+        lx = code.lx.toarray()
+        w_lx = np.sum(lx, axis=1)
+        k = np.max(w_lx)
+        p_phys = results[index]['error_rate']
+        kp = 1 - (1 - p_phys)**k
+
+
+        line = ax[0].errorbar(p_phys, results[index]['p_est'], results[index]['p_se'],
                     label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$', capsize=capsize, marker='o', ms=ms)
-        ax[0].plot(results[index]['error_rate'], k*results[index]['error_rate'], 'k--')
-        ax[1].errorbar(results[index]['error_rate'], results[index]['p_est_X'], results[index]['p_se_X'],
+        linecolor = line[0].get_color()
+        ax[0].plot(p_phys, kp, color=linecolor, linestyle=(0,(3,6)))
+        ax[0].plot(p_phys, kp, color='k', linestyle=(4.5,(3,6)))
+
+        ax[1].errorbar(p_phys, results[index]['p_est_X'], results[index]['p_se_X'],
                     label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$', capsize=capsize, marker='o', ms=ms)
-        ax[2].errorbar(results[index]['error_rate'], results[index]['p_est_Z'], results[index]['p_se_Z'],
+        ax[2].errorbar(p_phys, results[index]['p_est_Z'], results[index]['p_se_Z'],
                     label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$', capsize=capsize, marker='o', ms=ms)
+        
+        legend_lines.append(line)
+        legend_labels.append(rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$')
+
+    from matplotlib import lines
+
+    th_line1 = lines.Line2D([], [], color='gray', linestyle=(0,(3,6)))
+    th_line2 = lines.Line2D([], [], color='k', linestyle=(4.5,(3,6)))
+
+    legend_lines.append((th_line1, th_line2))
+    legend_labels.append('pseudo-threshold')
 
     ax[0].axvline(analysis.thresholds.iloc[0]['p_th_fss'], color='red', linestyle='--')
     ax[0].axvspan(analysis.thresholds.iloc[0]['p_th_fss_left'], analysis.thresholds.iloc[0]['p_th_fss_right'],
@@ -193,6 +216,8 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
 
     # ax[0].set_xscale('log')
     # ax[0].set_yscale('log')
+    dist = p_phys.max() - p_phys.min()
+    ax[0].set_xlim(p_phys.min()-0.05*dist, p_phys.max()+0.05*dist)
     ax[0].set_ylim(ymax=1.1)
 
     ax[0].set_title('All errors')
@@ -201,7 +226,8 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
 
     ax[0].set_xlabel('Physical error rate')
     ax[0].set_ylabel('Logical error rate')
-    ax[0].legend(title=pth_str_1)
+    ax[0].legend(legend_lines, legend_labels, title=pth_str_1)
+
 
     ax[1].set_xlabel('Physical error rate')
     ax[1].set_ylabel('Logical error rate')
@@ -216,23 +242,27 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     plt.show()
 
 analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
-                               n_trials=1e3, 
-                               grids=[{'L_x':6,'L_y':6},
-                                      {'L_x': 9,'L_y':6},
-                                      {'L_x': 12,'L_y':6},
-                                      {'L_x': 15,'L_y':6}],
-                               p_range=(0, 0.25, 60),
-                               r=(1/3, 1/3, 1/3),
-                               max_bp_iter=1000)
+                    decoder_dict={'name': 'BeliefPropagationOSDDecoder',
+                                  'parameters': [{'max_bp_iter': int(1e3), 'osd_order': 10}]},
+                    n_trials=5e2, 
+                    grids=[{'L_x':6,'L_y':6},
+                           {'L_x': 9,'L_y':6},
+                           {'L_x': 12,'L_y':6},
+                           {'L_x': 15,'L_y':6}],
+                    p_range=(0, 0.25, 60),
+                    r=(1/3, 1/3, 1/3))
 
 # analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
-#                                n_trials=1e3, 
-#                                grids=[{'L_x':10,'L_y':10},
-#                                       {'L_x': 20,'L_y':20},
-#                                       {'L_x': 30,'L_y':30}],
-#                                p_range=(1e-3, 0.25, 60),
-#                                r=(1/3, 1/3, 1/3),
-#                                max_bp_iter=1000)
+#                     decoder_dict={'name': 'MatchingDecoder',
+#                                   'parameters': [{}]},
+#                     n_trials=1e2, 
+#                     grids=[{'L_x':6,'L_y':6},
+#                            {'L_x': 9,'L_y':6},
+#                            {'L_x': 12,'L_y':6},
+#                            {'L_x': 15,'L_y':6}],
+#                     p_range=(0, 0.25, 60),
+#                     r=(1/3, 1/3, 1/3))
+
 plot_thresholds(analysis, savefig=True, filename=filename.replace('data', 'figures').replace('.json', '.pdf'))
 
 
