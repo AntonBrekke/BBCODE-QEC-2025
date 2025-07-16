@@ -23,6 +23,9 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
         self._channel_update = channel_update
         self._osd_order = lsd_order
         self._bp_method = bp_method
+        if hasattr(self.error_model, 'delta'):
+            self.error_channel = np.sqrt(np.pi)-self.error_model.delta
+        else: self.error_channel = None
 
         # Do not initialize the decoder until we call the decode method.
         # This is required because during analysis, there is no need to
@@ -85,6 +88,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             self.z_decoder = BpLsdDecoder(
                 self.code.Hx,
                 error_rate=self.error_rate,
+                error_channel=self.error_channel,
                 max_iter=self._max_bp_iter,
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
@@ -96,6 +100,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             self.x_decoder = BpLsdDecoder(
                 self.code.Hz,
                 error_rate=self.error_rate,
+                error_channel=self.error_channel,
                 max_iter=self._max_bp_iter,
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
@@ -108,6 +113,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             self.decoder = BpLsdDecoder(
                 self.code.stabilizer_matrix,
                 error_rate=self.error_rate,
+                error_channel=self.error_channel,
                 max_iter=self._max_bp_iter,
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
@@ -132,6 +138,9 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
 
         pi, px, py, pz = self.get_probabilities()
 
+        # P_x = px*(1-py)*(1-pz) + px*(1-py)*pz + px*py*(1-pz) + px*py*pz
+        #     = px - pxpy - pxpz + pxpypz + pxpz - pxpypz + pxpy - pxpypz + pxpypz
+        #     = px
         probabilities_x = px + py
         probabilities_z = pz + py
 

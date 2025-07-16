@@ -1,6 +1,8 @@
 import BBcode_classes as BBcode
 from decoder_classes import BeliefPropagationLSDDecoder
-from panqec.config import CODES, DECODERS
+from errormodel_classes import GaussianPauliErrorModel
+
+from panqec.config import CODES, DECODERS, ERROR_MODELS
 import numpy as np
 import os 
 from tqdm import tqdm
@@ -49,6 +51,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     # Must register the new code in panQEC 
     CODES[f'{code_name}'] = code_class
     DECODERS['BeliefPropagationLSDDecoder'] = BeliefPropagationLSDDecoder
+    ERROR_MODELS['GaussianPauliErrorModel'] = GaussianPauliErrorModel
 
     save_frequency = 10  # Frequency of saving to file
     n_trials_str = f'{n_trials:.0e}'.replace('+0', '')
@@ -81,7 +84,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                     'parameters': grids  # List of dictionaries with code parameters
                 },
                 'error_model': {
-                    'name': 'PauliErrorModel',  #  Class name of the error model
+                    'name': 'GaussianPauliErrorModel',  #  Class name of the error model
                     'parameters': [
                         {'r_x': r_x, 'r_y': r_y, 'r_z': r_z}  #  Ratios of X, Y and Z errors
                     ],
@@ -169,15 +172,14 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
         code = eval('BBcode.' + results['code'][0] + f'({Lx}, {Ly})')
         index = results['code_params'] == Ls
         k = code.num_logical_qubits 
-        lx = code.lx.toarray()
-        w_lx = np.sum(lx, axis=1)
-        k = np.max(w_lx)
+        # lx = code.lx.toarray()
+        # w_lx = np.sum(lx, axis=1)
+        # k = np.max(w_lx)
         p_phys = results[index]['error_rate']
-        kp = 1 - (1 - p_phys)**k
-
+        kp = 1 - (1 - p_phys)**k        # 1 - (1-p)^k = k*p to first order
 
         line = ax[0].errorbar(p_phys, results[index]['p_est'], results[index]['p_se'],
-                    label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$', capsize=capsize, marker='o', ms=ms)
+                    label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$, $k\!: {k}$', capsize=capsize, marker='o', ms=ms)
         linecolor = line[0].get_color()
         ax[0].plot(p_phys, kp, color=linecolor, linestyle=(0,(3,6)))
         ax[0].plot(p_phys, kp, color='k', linestyle=(4.5,(3,6)))
@@ -188,7 +190,7 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
                     label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$', capsize=capsize, marker='o', ms=ms)
         
         legend_lines.append(line)
-        legend_labels.append(rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$')
+        legend_labels.append(rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$, $k\!: {k}$')
 
     from matplotlib import lines
 
@@ -241,19 +243,19 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     if savefig: plt.savefig(filename)
     plt.show()
 
-analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
-                    decoder_dict={'name': 'BeliefPropagationOSDDecoder',
-                                  'parameters': [{'max_bp_iter': int(1e3), 'osd_order': 10}]},
-                    n_trials=5e2, 
-                    grids=[{'L_x':6,'L_y':6},
-                           {'L_x': 9,'L_y':6},
-                           {'L_x': 12,'L_y':6},
-                           {'L_x': 15,'L_y':6}],
-                    p_range=(0, 0.25, 60),
-                    r=(1/3, 1/3, 1/3))
+# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
+#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+#                                   'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10}]},
+#                     n_trials=1e2, 
+#                     grids=[{'L_x':6,'L_y':6},
+#                            {'L_x': 9,'L_y':6},
+#                            {'L_x': 12,'L_y':6},
+#                            {'L_x': 15,'L_y':6}],
+#                     p_range=(0, 0.25, 60),
+#                     r=(1, 0, 0))
 
 # analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
-#                     decoder_dict={'name': 'MatchingDecoder',
+#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
 #                                   'parameters': [{}]},
 #                     n_trials=1e2, 
 #                     grids=[{'L_x':6,'L_y':6},
@@ -261,7 +263,7 @@ analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
 #                            {'L_x': 12,'L_y':6},
 #                            {'L_x': 15,'L_y':6}],
 #                     p_range=(0, 0.25, 60),
-#                     r=(1/3, 1/3, 1/3))
+#                     r=(1,0,0))
 
 plot_thresholds(analysis, savefig=True, filename=filename.replace('data', 'figures').replace('.json', '.pdf'))
 

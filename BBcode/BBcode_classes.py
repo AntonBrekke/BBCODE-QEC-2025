@@ -419,9 +419,16 @@ class BBcode_Ay3x1x2_Bx3y7y2(AntonBB2DCode):
 
 if __name__ == '__main__':
     # Visualize the code in the GUI
+
+    from decoder_classes import BeliefPropagationLSDDecoder
+    from errormodel_classes import GaussianPauliErrorModel
+
     gui = GUI()
     gui.add_code(BBcode_Toric, 'BBcode Toric')
     gui.add_code(BBcode_ArXiV_example, 'BBcode ArXiV example')
     gui.add_code(BBcode_A312_B312, 'BBcode-A312-B312')
     gui.add_code(BBcode_Ay3x1x2_Bx3y7y2, 'BBcode-Ay3x1x2-Bx3y7y2')
+
+    gui.add_decoder(BeliefPropagationLSDDecoder, 'BeliefPropagationLSDDecoder')
+
     gui.run(port=5000)
