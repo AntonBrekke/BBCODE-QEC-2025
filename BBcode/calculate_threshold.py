@@ -1,5 +1,5 @@
 import BBcode_classes as BBcode
-from BP_LSD import BeliefPropagationLSDDecoder
+from decoder_classes import BeliefPropagationLSDDecoder
 from panqec.config import CODES, DECODERS
 import numpy as np
 import os 
