@@ -20,6 +20,8 @@ from panqec.analysis import Analysis
 
 
 def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
+                        error_model_dict: dict = {'name': 'GaussianPauliErrorModel',  #  Class name of the error model
+                                                  'parameters': [{'r_x': 1/3, 'r_y': 1/3, 'r_z': 1/3}]},
                         decoder_dict: dict = {'name': 'BeliefPropagationLSDDecoder',  #  Class name of the decoder
                                               'parameters': [{'max_bp_iter': 1e3, 'lsd_order': 10, 
                                               'channel_update': False, 'bp_method': 'minimum_sum'}]}, 
@@ -42,11 +44,11 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     decoder_name = decoder_dict['name']
 
     # Check if parity checks we implement are the same as in PanQEC 
-    test_code = code_class(4,4)
-    print(test_code.HX)
-    print(test_code.Hx.toarray())
-    print(np.all(test_code.HX == test_code.Hx.toarray()))
-    print(np.all(test_code.HZ == test_code.Hz.toarray()))
+    # test_code = code_class(4,4)
+    # print(test_code.HX)
+    # print(test_code.Hx.toarray())
+    # print(np.all(test_code.HX == test_code.Hx.toarray()))
+    # print(np.all(test_code.HZ == test_code.Hz.toarray()))
 
     # Must register the new code in panQEC 
     CODES[f'{code_name}'] = code_class
@@ -55,11 +57,12 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
 
     save_frequency = 10  # Frequency of saving to file
     n_trials_str = f'{n_trials:.0e}'.replace('+0', '')
-    grids_str = f'{grids}'.replace(' ', '').replace(':',';').replace(':', ';').replace("'", "")
+    grids_str = f'{grids}'.replace(' ', '').replace(':',';').replace(':', ';').replace("'", "").replace('_', '')
     p_range_str = f'{p_range}'.replace(' ', '')
-    r_tup_str =  f'({r[0]:.1f},' + f'{r[1]:.1f},' + f'{r[2]:.1f})'
-    decoder_dict_str = f'{decoder_dict}'.replace(' ', '').replace(':', ';').replace("'", "")
-    filename = f"data\{code_name};n_trials;{n_trials_str};grids;{grids_str};p_range;{p_range_str};r;{r_tup_str};decoder;{decoder_dict_str}.json"
+    error_model_dict_str = f'{error_model_dict}'.replace(' ', '').replace("'name':", '').replace(':', ';').replace("'", "").replace('_', '')
+    decoder_dict_str = f'{decoder_dict}'.replace(' ', '').replace("'name':", '').replace(':', ';').replace("'", "")
+
+    filename = f"data\{code_name};{grids_str};{error_model_dict_str};{decoder_dict_str};p_range;{p_range_str};n_trials;{n_trials_str}.json"
 
     # This magically fixes the fact that the filename is too long... 
     filename = u"\\\\?\\" + os.path.abspath(filename)
@@ -83,12 +86,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                     'name': f'{code_name}',  # Class name of the code
                     'parameters': grids  # List of dictionaries with code parameters
                 },
-                'error_model': {
-                    'name': 'GaussianPauliErrorModel',  #  Class name of the error model
-                    'parameters': [
-                        {'r_x': r_x, 'r_y': r_y, 'r_z': r_z}  #  Ratios of X, Y and Z errors
-                    ],
-                },
+                'error_model': error_model_dict,
                 'decoder': decoder_dict,
                 'error_rate': p.tolist()  #  List of physical error rates
             }
@@ -110,7 +108,7 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     return analysis, filename 
 
 
-def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
+def plot_error_rates(analysis, savefig: bool=False, filename: str=None, include_threshold_estimate: bool=True):
     if filename is None:
         filename = 'figures/no_filename.pdf'
     ### Plot resulting data 
@@ -125,7 +123,8 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
             'ytick.labelsize': 10,
             'legend.title_fontsize': 10,
             'legend.fontsize': 10,
-            'font.size': 10} # extend as needed
+            'font.size': 10,
+            'figure.titlesize': 16} # extend as needed
     # print(plt.rcParams.keys())
     plt.rcParams.update(params)
 
@@ -135,11 +134,11 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     fig, ax = plt.subplots(ncols=3, figsize=(15, 5))
 
     plt.sca(ax[0])
-    analysis.plot_thresholds()
+    analysis.plot_thresholds(include_threshold_estimate=include_threshold_estimate)
     plt.sca(ax[1])
-    analysis.plot_thresholds(sector='X')
+    analysis.plot_thresholds(sector='X', include_threshold_estimate=include_threshold_estimate)
     plt.sca(ax[2])
-    analysis.plot_thresholds(sector='Z')
+    analysis.plot_thresholds(sector='Z', include_threshold_estimate=include_threshold_estimate)
 
     fig.tight_layout()
     plt.show()
@@ -148,7 +147,7 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
 
     fig, ax = plt.subplots(ncols=3, figsize=(15, 5))
 
-    results = analysis.get_results()
+    results = analysis.get_results()        # same as analysis.trunc_results['total']
     # Count number of combinations of L_x and L_y
     dict_arr = np.array([[*L_dict.values()][:-1] for L_dict in results['code_params']])
     n_Ls = 0 
@@ -161,7 +160,12 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
 
     # Divide by total number of choices of L_x x L_y in parameters from input_data to only get each code param. one time 
     n_trials_pr = int(len(results['n_trials'])/n_Ls)
+
+    code_names =  results['code'][::n_trials_pr]
     code_params = results['code_params'][::n_trials_pr]
+    error_models = results['error_model'][::n_trials_pr]
+    decoders = results['decoder'][::n_trials_pr]
+    biases = results['bias'][::n_trials_pr]
 
     capsize = 5
     ms = 5
@@ -200,17 +204,18 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     legend_lines.append((th_line1, th_line2))
     legend_labels.append('pseudo-threshold')
 
-    ax[0].axvline(analysis.thresholds.iloc[0]['p_th_fss'], color='red', linestyle='--')
-    ax[0].axvspan(analysis.thresholds.iloc[0]['p_th_fss_left'], analysis.thresholds.iloc[0]['p_th_fss_right'],
-                alpha=0.5, color='pink')
     result_X = analysis.sector_thresholds['X']
     result_Z = analysis.sector_thresholds['Z']
-    ax[1].axvline(result_X['p_th_fss'][0], color='red', linestyle='--')
-    ax[1].axvspan(result_X['p_th_fss_left'][0], result_X['p_th_fss_right'][0],
-                alpha=0.5, color='pink')
-    ax[2].axvline(result_Z['p_th_fss'][0], color='red', linestyle='--')
-    ax[2].axvspan(result_Z['p_th_fss_left'][0], result_Z['p_th_fss_right'][0],
-                alpha=0.5, color='pink')
+    if include_threshold_estimate:
+        ax[0].axvline(analysis.thresholds.iloc[0]['p_th_fss'], color='red', linestyle='--')
+        ax[0].axvspan(analysis.thresholds.iloc[0]['p_th_fss_left'], analysis.thresholds.iloc[0]['p_th_fss_right'],
+                    alpha=0.5, color='pink')
+        ax[1].axvline(result_X['p_th_fss'][0], color='red', linestyle='--')
+        ax[1].axvspan(result_X['p_th_fss_left'][0], result_X['p_th_fss_right'][0],
+                    alpha=0.5, color='pink')
+        ax[2].axvline(result_Z['p_th_fss'][0], color='red', linestyle='--')
+        ax[2].axvspan(result_Z['p_th_fss_left'][0], result_Z['p_th_fss_right'][0],
+                    alpha=0.5, color='pink')
 
     pth_str_1 = r'$p_{\rm th}' + f' = ({100*analysis.thresholds.iloc[0]["p_th_fss"]:.2f}' + '\pm' + f'{100*analysis.thresholds.iloc[0]["p_th_fss_se"]:.2f})\%$'
     pth_str_2 = r'$p_{\rm th}' + f' = ({100*result_X["p_th_fss"][0]:.2f}' + '\pm' + f'{100*result_X["p_th_fss_se"][0]:.2f})\%$'
@@ -222,6 +227,12 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     ax[0].set_xlim(p_phys.min()-0.05*dist, p_phys.max()+0.05*dist)
     ax[0].set_ylim(ymax=1.1)
 
+    code_name = code_names[0]
+    error_model = error_models[0]
+    bias_label = str(biases[0]).replace('inf', '\\infty')
+    decoder = decoders[0]
+    fig.suptitle(f'{error_model} {code_name}\n'f'$\\eta_Z={bias_label}$, {decoder}\n')
+
     ax[0].set_title('All errors')
     ax[1].set_title('X errors')
     ax[2].set_title('Z errors')
@@ -229,7 +240,6 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     ax[0].set_xlabel('Physical error rate')
     ax[0].set_ylabel('Logical error rate')
     ax[0].legend(legend_lines, legend_labels, title=pth_str_1)
-
 
     ax[1].set_xlabel('Physical error rate')
     ax[1].set_ylabel('Logical error rate')
@@ -243,29 +253,38 @@ def plot_thresholds(analysis, savefig: bool=False, filename: str=None):
     if savefig: plt.savefig(filename)
     plt.show()
 
-# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
+analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
+                    decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+                                  'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10}]},
+                    error_model_dict={'name': 'PauliErrorModel', 
+                                      'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+                    n_trials=5e2, 
+                    grids=[{'L_x':6,'L_y':6},
+                           {'L_x': 12,'L_y':6},
+                           {'L_x': 18,'L_y':6},
+                           {'L_x': 24,'L_y':6}],
+                    p_range=(0, 0.25, 40))
+
+# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Ay3x1x2_Bx3y7y2,
 #                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
 #                                   'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10}]},
-#                     n_trials=1e2, 
-#                     grids=[{'L_x':6,'L_y':6},
-#                            {'L_x': 9,'L_y':6},
-#                            {'L_x': 12,'L_y':6},
-#                            {'L_x': 15,'L_y':6}],
-#                     p_range=(0, 0.25, 60),
-#                     r=(1, 0, 0))
+#                     error_model_dict={'name': 'GaussianPauliErrorModel', 
+#                                       'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+#                     n_trials=5e2, 
+#                     grids=[{'L_x':12,'L_y':12},
+#                            {'L_x':18,'L_y': 18},
+#                            {'L_x':24,'L_y':24},],
+#                     p_range=(0, 0.25, 40))
 
 # analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
-#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+#                     decoder_dict={'name': 'MatchingDecoder',
 #                                   'parameters': [{}]},
-#                     n_trials=1e2, 
-#                     grids=[{'L_x':6,'L_y':6},
-#                            {'L_x': 9,'L_y':6},
-#                            {'L_x': 12,'L_y':6},
-#                            {'L_x': 15,'L_y':6}],
-#                     p_range=(0, 0.25, 60),
-#                     r=(1,0,0))
+#                     error_model_dict={'name': 'PauliErrorModel', 
+#                                       'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+#                     n_trials=5e2, 
+#                     grids=[{'L_x':10,'L_y':10},
+#                            {'L_x': 20,'L_y':20},
+#                            {'L_x': 30,'L_y':30}],
+#                     p_range=(0, 0.25, 40))
 
-plot_thresholds(analysis, savefig=True, filename=filename.replace('data', 'figures').replace('.json', '.pdf'))
-
-
-# print(calculate_threshold.__annotations__)
+plot_error_rates(analysis, savefig=False, filename=filename.replace('data', 'figures').replace('.json', '.pdf'), include_threshold_estimate=True)

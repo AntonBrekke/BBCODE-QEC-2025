@@ -23,9 +23,12 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
         self._channel_update = channel_update
         self._osd_order = lsd_order
         self._bp_method = bp_method
-        if hasattr(self.error_model, 'delta'):
-            self.error_channel = np.sqrt(np.pi)-self.error_model.delta
+        if hasattr(self.error_model, 'error_data'):
+            self.error_channel = self.error_model.error_data
+            self.error_rate = None
         else: self.error_channel = None
+
+        # self.error_channel = None
 
         # Do not initialize the decoder until we call the decode method.
         # This is required because during analysis, there is no need to
@@ -138,9 +141,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
 
         pi, px, py, pz = self.get_probabilities()
 
-        # P_x = px*(1-py)*(1-pz) + px*(1-py)*pz + px*py*(1-pz) + px*py*pz
-        #     = px - pxpy - pxpz + pxpypz + pxpz - pxpypz + pxpy - pxpypz + pxpypz
-        #     = px
+        # Y-errors also introduce X and Z-errors 
         probabilities_x = px + py
         probabilities_z = pz + py
 
