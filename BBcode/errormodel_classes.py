@@ -14,7 +14,7 @@ from scipy.special import erfinv
 th = np.sqrt(np.pi)/2
 
 def gaussian(x, sigma):
-    return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-x**2/(2*sigma**2))
+    return 1/(sigma*np.sqrt(2*np.pi))*np.exp(-x**2/(2*sigma**2)) if sigma != 0.0 else 0.0
 
 def root_func(sigma, p):
     return quad(gaussian, -th, th, args=(sigma,))[0] + p - 1
@@ -35,7 +35,7 @@ def fast_choice(options, probs, rng=None):
 class GaussianPauliErrorModel(BaseErrorModel):
 
     def __init__(self,
-                 r_x: float, r_y: float, r_z: float, 
+                 r_x: float, r_y: float, r_z: float,
                  deformation_name: Optional[str] = None, 
                  deformation_kwargs: Optional[dict] = None):
 
@@ -90,12 +90,10 @@ class GaussianPauliErrorModel(BaseErrorModel):
         r_x, r_y, r_z = self.direction
         p = p_x[0]
         # sigma_x = newton(root_func, x0=1, args=(p,))
-        # print(p, sigma_x, '1')
         sigma_x = np.sqrt(np.pi/8) * 1/(erfinv(1-p))
-        # print(p, sigma_x, '2')
 
         error_pauli = ''
-        self.error_data = []
+        self.gaussian_error_data = []
         options = ('I', 'X', 'Y', 'Z')
         for i in range(code.n):
             delta_x = rng.normal(0, sigma_x)
@@ -105,17 +103,13 @@ class GaussianPauliErrorModel(BaseErrorModel):
             else: 
                 error_pauli += options[1]
                 delta = np.sqrt(np.pi) - abs(delta_x)
-            likelihood = 1/(sigma_x*np.sqrt(2*np.pi))*np.exp(-(np.sqrt(np.pi)-delta)**2/(2*sigma_x**2)) if sigma_x != 0.0 else 0.0 
-            self.error_data.append(likelihood)
-            # likelihood = x
-            
 
-        # error_pauli = ''.join([fast_choice(
-        #     ('I', 'X', 'Y', 'Z'),
-        #     [p_i[i], p_x[i], p_y[i], p_z[i]],
-        #     rng=rng
-        # ) for i in range(code.n)])
-
+            likelihood_wrong = gaussian(np.sqrt(np.pi)-delta, sigma_x)
+            likelihood_correct = gaussian(delta, sigma_x)
+            normalization = likelihood_wrong + likelihood_correct
+            # If sigma --> 0, delta --> 0 and hence f_inc = 0 and f_corr = infinity. Then p_correct = 1, and p_wrong = 0
+            p_wrong = likelihood_wrong/normalization if normalization != 0.0 else 0.0
+            self.gaussian_error_data.append(p_wrong)
 
         error = pauli_to_bsf(error_pauli)
 

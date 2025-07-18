@@ -19,7 +19,7 @@ from panqec.simulation import read_input_dict
 from panqec.analysis import Analysis
 
 
-def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
+def simulate_code(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                         error_model_dict: dict = {'name': 'GaussianPauliErrorModel',  #  Class name of the error model
                                                   'parameters': [{'r_x': 1/3, 'r_y': 1/3, 'r_z': 1/3}]},
                         decoder_dict: dict = {'name': 'BeliefPropagationLSDDecoder',  #  Class name of the decoder
@@ -28,12 +28,11 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
                         n_trials: int=1e2, 
                         grids: list[dict]=[{'L_x':10,'L_y':10}],
                         p_range: tuple=(0.1, 0.25, 40),
-                        r: tuple=(1/3, 1/3, 1/3)
+                        ask_overwrite: bool=True
                         ):
 
     n_trials = int(n_trials)  # Ensure n_trials is an integer
     p_min, p_max, n_points = p_range
-    r_x, r_y, r_z = r
     p = np.linspace(p_min, p_max, n_points)
 
     # Define which code-class to use 
@@ -69,7 +68,8 @@ def calculate_threshold(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
 
     rewrite_data = True
     if os.path.exists(filename):
-        advance = False
+        if ask_overwrite: advance = False
+        else: advance = True
         while not advance:
             answer = input(f'Filename {filename} already exists. Do you want to write over the existing one (y/n)? ')
             if answer.lower() == 'y':
@@ -166,16 +166,17 @@ def plot_error_rates(analysis, savefig: bool=False, filename: str=None, include_
     error_models = results['error_model'][::n_trials_pr]
     decoders = results['decoder'][::n_trials_pr]
     biases = results['bias'][::n_trials_pr]
+    num_logical_qubits = results['k'][::n_trials_pr].values
 
     capsize = 5
     ms = 5
     legend_lines = []
     legend_labels = []
-    for Ls in code_params:
+    for i, Ls in enumerate(code_params):
         Lx, Ly, Lz = Ls.values()
-        code = eval('BBcode.' + results['code'][0] + f'({Lx}, {Ly})')
+        # code = eval('BBcode.' + results['code'][0] + f'({Lx}, {Ly})')
         index = results['code_params'] == Ls
-        k = code.num_logical_qubits 
+        k = num_logical_qubits[i] 
         # lx = code.lx.toarray()
         # w_lx = np.sum(lx, axis=1)
         # k = np.max(w_lx)
@@ -253,19 +254,228 @@ def plot_error_rates(analysis, savefig: bool=False, filename: str=None, include_
     if savefig: plt.savefig(filename)
     plt.show()
 
-analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
-                    decoder_dict={'name': 'BeliefPropagationLSDDecoder',
-                                  'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10}]},
-                    error_model_dict={'name': 'PauliErrorModel', 
-                                      'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
-                    n_trials=5e2, 
-                    grids=[{'L_x':6,'L_y':6},
-                           {'L_x': 12,'L_y':6},
-                           {'L_x': 18,'L_y':6},
-                           {'L_x': 24,'L_y':6}],
-                    p_range=(0, 0.25, 40))
 
-# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Ay3x1x2_Bx3y7y2,
+
+def plot_compare_models(analysis1, analysis2, savefig=False):
+    ### Plot resulting data 
+    plt.style.use('seaborn-v0_8')
+    # Comment back in to get LaTeX font 
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+    plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
+    params = {'axes.labelsize': 14,
+            'axes.titlesize': 14,
+            'xtick.labelsize': 10,
+            'ytick.labelsize': 10,
+            'legend.title_fontsize': 10,
+            'legend.fontsize': 10,
+            'font.size': 10,
+            'figure.titlesize': 16} # extend as needed
+    # print(plt.rcParams.keys())
+    plt.rcParams.update(params)
+
+    custom_cycle = ["#6667AB", "#C74375", "#F0C05A", "#009473", 'red', 'pink']
+    plt.rcParams["axes.prop_cycle"] = plt.cycler(color=custom_cycle)
+
+    fig = plt.figure(figsize=(9, 5))
+    gs = fig.add_gridspec(1, 2)
+    ax = fig.add_subplot(gs[0, :])
+
+    results1 = analysis1.get_results()        # same as analysis.trunc_results['total']
+    # Count number of combinations of L_x and L_y
+    dict_arr1 = np.array([[*L_dict.values()][:-1] for L_dict in results1['code_params']])
+    n_Ls1 = 0 
+    com_list = []
+    for d in dict_arr1:
+        lx, ly = d
+        if (lx, ly) not in com_list:
+            com_list.append((lx, ly))
+            n_Ls1 += 1
+
+    # Divide by total number of choices of L_x x L_y in parameters from input_data to only get each code param. one time 
+    n_trials_pr1 = int(len(results1['n_trials'])/n_Ls1)
+
+    code_names1 =  results1['code'][::n_trials_pr1]
+    code_params1 = results1['code_params'][::n_trials_pr1]
+    error_models1 = results1['error_model'][::n_trials_pr1]
+    decoders1 = results1['decoder'][::n_trials_pr1]
+    biases1 = results1['bias'][::n_trials_pr1]
+    num_logical_qubits1 = results1['k'][::n_trials_pr1].values
+
+    results2 = analysis2.get_results()        # same as analysis.trunc_results['total']
+    # Count number of combinations of L_x and L_y
+    dict_arr2 = np.array([[*L_dict.values()][:-1] for L_dict in results2['code_params']])
+    n_Ls2 = 0 
+    com_list = []
+    for d in dict_arr2:
+        lx, ly = d
+        if (lx, ly) not in com_list:
+            com_list.append((lx, ly))
+            n_Ls2 += 1
+
+    # Divide by total number of choices of L_x x L_y in parameters from input_data to only get each code param. one time 
+    n_trials_pr2 = int(len(results2['n_trials'])/n_Ls2)
+
+    code_names2 =  results2['code'][::n_trials_pr2]
+    code_params2 = results2['code_params'][::n_trials_pr2]
+    error_models2 = results2['error_model'][::n_trials_pr2]
+    decoders2 = results2['decoder'][::n_trials_pr2]
+    biases2 = results2['bias'][::n_trials_pr2]
+    num_logical_qubits2 = results2['k'][::n_trials_pr2].values
+
+    code_name1 = code_names1[0]
+    error_model1 = error_models1[0]
+    bias_label1 = str(biases1[0]).replace('inf', '\\infty')
+    decoder1 = decoders1[0]
+    code_name2 = code_names2[0]
+    error_model2 = error_models2[0]
+    bias_label2 = str(biases2[0]).replace('inf', '\\infty')
+    decoder2 = decoders2[0]
+
+    n_trials_str1 = f"{results1['n_trials'][0]:.0e}".replace('+0', '')
+    n_trials_str2 = f"{results2['n_trials'][0]:.0e}".replace('+0', '')
+    filename = f"figures\compare_{code_name1}_ntrials;{n_trials_str1}_{code_name2}_ntrials;{n_trials_str2}.pdf"
+
+    rewrite_plot = True
+    if os.path.exists(filename) and savefig:
+        advance = False
+        while not advance:
+            answer = input(f'Filename {filename} already exists. Do you want to write over the existing one (y/n)? ')
+            if answer.lower() == 'y':
+                advance = True
+            elif answer.lower() == 'n':
+                rewrite_plot = False
+                advance = True 
+
+    capsize = 5
+    ms = 5
+    from matplotlib import lines 
+    analysis1_line = lines.Line2D([], [], color='gray', linestyle='solid')
+    legend_lines1 = [analysis1_line]
+    legend_labels1 = [f'Analysis 1']
+    for i, Ls in enumerate(code_params1):
+        Lx, Ly, Lz = Ls.values()
+        # code = eval('BBcode.' + results1['code'][0] + f'({Lx}, {Ly})')
+        index = results1['code_params'] == Ls
+        k = num_logical_qubits1[i] 
+        # lx = code.lx.toarray()
+        # w_lx = np.sum(lx, axis=1)
+        # k = np.max(w_lx)
+        p_phys1 = results1[index]['error_rate']
+        kp = 1 - (1 - p_phys1)**k        # 1 - (1-p)^k = k*p to first order
+
+        line = ax.errorbar(p_phys1, results1[index]['p_est'], results1[index]['p_se'],
+                    label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$, $k\!: {k}$', capsize=capsize, marker='o', ms=ms)
+        linecolor = line[0].get_color()
+        ax.plot(p_phys1, kp, color=linecolor, linestyle=(0,(3,6)))
+        ax.plot(p_phys1, kp, color='k', linestyle=(4.5,(3,6)))
+        
+        legend_lines1.append(line)
+        legend_labels1.append(rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$, $k\!: {k}$')
+    # print(plt.rcParams.keys())
+
+    # Reset matplotlib color cycle 
+    plt.gca().set_prop_cycle(plt.cycler(color=custom_cycle))
+    analysis2_line = lines.Line2D([], [], color='gray', linestyle=(0,(2,2)))
+    legend_lines2 = [analysis2_line]
+    legend_labels2 = [f'Analysis 2']
+    for i, Ls in enumerate(code_params2):
+        Lx, Ly, Lz = Ls.values()
+        # code = eval('BBcode.' + results2['code'][0] + f'({Lx}, {Ly})')
+        index = results2['code_params'] == Ls
+        k = num_logical_qubits2[i] 
+        # lx = code.lx.toarray()
+        # w_lx = np.sum(lx, axis=1)
+        # k = np.max(w_lx)
+        p_phys2 = results2[index]['error_rate']
+        kp = 1 - (1 - p_phys2)**k        # 1 - (1-p)^k = k*p to first order
+
+        line = ax.errorbar(p_phys2, results2[index]['p_est'], results2[index]['p_se'],
+                    label=rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$, $k\!: {k}$', linestyle=(0,(2,2)), capsize=capsize, marker='o', ms=ms)
+        linecolor = line[0].get_color()
+        ax.plot(p_phys2, kp, color=linecolor, linestyle=(0,(3,6)))
+        ax.plot(p_phys2, kp, color='k', linestyle=(4.5,(3,6)))
+        
+        legend_lines2.append(line)
+        legend_labels2.append(rf'$L_x\!: {Lx}$, $L_y\!: {Ly}$, $k\!: {k}$')
+
+    th_line1 = lines.Line2D([], [], color='gray', linestyle=(0,(3,6)))
+    th_line2 = lines.Line2D([], [], color='k', linestyle=(4.5,(3,6)))
+
+    legend_lines2.append((th_line1, th_line2))
+    legend_labels2.append('pseudo-threshold')
+
+    dist = max(p_phys1.max() - p_phys1.min(), p_phys2.max() - p_phys2.min())
+    p_phys_min = min(p_phys1.min(), p_phys2.min())
+    p_phys_max = max(p_phys1.max(), p_phys2.max())
+    ax.set_xlim(p_phys_min-0.05*dist, p_phys_max+0.05*dist)
+    ax.set_ylim(ymax=1.1)
+
+    if 'gaussian' in results1['decoder_params'][::n_trials_pr1].values[0].keys():
+        gaussian_decoding1 = results1['decoder_params'][::n_trials_pr1].values[0]['gaussian']
+        gauss_decoder_str1 = f'(Gaussian={gaussian_decoding1}) '
+    else: 
+        gauss_decoder_str1 = ''
+    if 'gaussian' in results2['decoder_params'][::n_trials_pr2].values[0].keys():
+        gaussian_decoding2 = results2['decoder_params'][::n_trials_pr2].values[0]['gaussian']
+        gauss_decoder_str2 = f'(Gaussian={gaussian_decoding2}) '
+    else: 
+        gauss_decoder_str2 = ''
+
+    # ax.set_title(f'Analysis 1: {error_model1} {code_name1},{decoder1}' + gauss_decoder_str1 + f'$\\eta_Z={bias_label1}$', loc='left', wrap=True)
+    # ax.set_title(f'Analysis 2: {error_model2} {code_name2},{decoder2}' + gauss_decoder_str2 + f'$\\eta_Z={bias_label2}$', loc='right', wrap=True)
+    title = (
+        r"$\begin{array}{l}"
+        r"\text{Analysis 1: }" + r"\text{" + f"{error_model1} {code_name1}, $\\eta_Z={bias_label1}$" + r"}\\"
+        r"\text{\phantom{Analysis 1: }}" + r"\text{" + f"{decoder1}" + gauss_decoder_str1 + r"}\\"
+        r"\text{Analysis 2: }" + r"\text{" + f"{error_model2} {code_name2}, $\\eta_Z={bias_label2}$" + r"}\\"
+        r"\text{\phantom{Analysis 2: }}" + r"\text{" + f"{decoder2}" + gauss_decoder_str2 + r"}\\"
+        r"\end{array}$"
+    )
+    title1 = (
+        r"$\begin{array}{l}"
+        r"\text{Analysis 1: }" + r"\text{" + f"{code_name1}" + r"}\\"
+        r"\text{" + f"{error_model1}, $\\eta_Z={bias_label1}$" + r"}\\"
+        r"\text{" + f"{decoder1}" + gauss_decoder_str1 + r"}"
+        r"\end{array}$"
+    )
+    title2 = (
+        r"$\begin{array}{l}"
+        r"\text{Analysis 2: }" + r"\text{" + f"{code_name2}" + r"}\\"
+        r"\text{" + f"{error_model2}, $\\eta_Z={bias_label2}$" + r"}\\"
+        r"\text{" + f"{decoder2}" + gauss_decoder_str2 + r"}"
+        r"\end{array}$"
+    )
+    # ax.set_title(f'Analysis 1: {error_model1} {code_name1},\n {decoder1}' + gauss_decoder_str1 + f'$\\eta_Z={bias_label1}$\n' + f'Analysis 2: {error_model2} {code_name2},\n{decoder2}' + gauss_decoder_str2 + f'$\\eta_Z={bias_label2}$')
+    ax.set_title(title1, loc='left')
+    ax.set_title(title2, loc='right')
+
+    ax.set_xlabel('Physical error rate')
+    ax.set_ylabel('Logical error rate')
+    ax.legend(legend_lines1 + legend_lines2, legend_labels1 + legend_labels2)
+
+    fig.tight_layout()
+    if savefig and rewrite_plot: plt.savefig(filename)
+    plt.show()
+
+"""
+Make function calls for analysis and plotting 
+"""
+
+
+# analysis, filename = simulate_code(BBclass=BBcode.BBcode_A312_B312,
+#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+#                                   'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10}]},
+#                     error_model_dict={'name': 'GaussianPauliErrorModel', 
+#                                       'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+#                     n_trials=5e2, 
+#                     grids=[{'L_x':6,'L_y':6},
+#                            {'L_x': 12,'L_y':6},
+#                            {'L_x': 18,'L_y':6},
+#                            {'L_x': 24,'L_y':6}],
+#                     p_range=(0, 0.25, 40))
+
+# analysis, filename = simulate_code(BBclass=BBcode.BBcode_Ay3x1x2_Bx3y7y2,
 #                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
 #                                   'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10}]},
 #                     error_model_dict={'name': 'GaussianPauliErrorModel', 
@@ -276,15 +486,68 @@ analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_A312_B312,
 #                            {'L_x':24,'L_y':24},],
 #                     p_range=(0, 0.25, 40))
 
-# analysis, filename = calculate_threshold(BBclass=BBcode.BBcode_Toric,
-#                     decoder_dict={'name': 'MatchingDecoder',
+# analysis, filename = simulate_code(BBclass=BBcode.BBcode_Toric,
+#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
 #                                   'parameters': [{}]},
-#                     error_model_dict={'name': 'PauliErrorModel', 
+#                     error_model_dict={'name': 'GaussianPauliErrorModel', 
 #                                       'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
-#                     n_trials=5e2, 
+#                     n_trials=1e2, 
 #                     grids=[{'L_x':10,'L_y':10},
 #                            {'L_x': 20,'L_y':20},
 #                            {'L_x': 30,'L_y':30}],
 #                     p_range=(0, 0.25, 40))
 
-plot_error_rates(analysis, savefig=False, filename=filename.replace('data', 'figures').replace('.json', '.pdf'), include_threshold_estimate=True)
+# plot_error_rates(analysis, savefig=False, filename=filename.replace('data', 'figures').replace('.json', '.pdf'), include_threshold_estimate=False)
+
+
+# analysis1, filename = simulate_code(BBclass=BBcode.BBcode_Toric,
+#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+#                                   'parameters': [{'gaussian': True}]},
+#                     error_model_dict={'name': 'GaussianPauliErrorModel', 
+#                                       'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+#                     n_trials=1e2, 
+#                     grids=[{'L_x':10,'L_y':10}, 
+#                            {'L_x':20,'L_y':20}, 
+#                            {'L_x':30,'L_y':30}],
+#                     p_range=(0, 0.2, 40),
+#                     ask_overwrite=False)
+
+# analysis2, filename = simulate_code(BBclass=BBcode.BBcode_Toric,
+#                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+#                                   'parameters': [{'gaussian': False}]},
+#                     error_model_dict={'name': 'GaussianPauliErrorModel', 
+#                                       'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+#                     n_trials=1e2, 
+#                     grids=[{'L_x':10,'L_y':10}, 
+#                            {'L_x':20,'L_y':20}, 
+#                            {'L_x':30,'L_y':30}],
+#                     p_range=(0, 0.2, 40), 
+#                     ask_overwrite=False)
+
+analysis1, filename1 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
+                    decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+                                  'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10, 'gaussian': True}]},
+                    error_model_dict={'name': 'GaussianPauliErrorModel', 
+                                      'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+                    n_trials=1e2, 
+                    grids=[{'L_x':6,'L_y':6},
+                           {'L_x': 12,'L_y':6},
+                           {'L_x': 18,'L_y':6},
+                           {'L_x': 24,'L_y':6}],
+                    p_range=(0, 0.2, 40),
+                    ask_overwrite=True)
+
+analysis2, filename2 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
+                    decoder_dict={'name': 'BeliefPropagationLSDDecoder',
+                                  'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10, 'gaussian': False}]},
+                    error_model_dict={'name': 'GaussianPauliErrorModel', 
+                                      'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+                    n_trials=1e2, 
+                    grids=[{'L_x':6,'L_y':6},
+                           {'L_x': 12,'L_y':6},
+                           {'L_x': 18,'L_y':6},
+                           {'L_x': 24,'L_y':6}],
+                    p_range=(0, 0.2, 40), 
+                    ask_overwrite=True)
+
+plot_compare_models(analysis1, analysis2, savefig=True)

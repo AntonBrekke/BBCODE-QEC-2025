@@ -23,10 +23,10 @@ class AntonBB2DCode(StabilizerCode):
 
     def __init__(self, L_x, L_y=None):
         if L_y is None: L_y = L_x
-        # L_x, L_y = 12, 6
+        # L_x, L_y = 6, 12
         super().__init__(L_x, L_y)
 
-        ell, m = L_y, L_x
+        ell, m = L_x, L_y
         # code length
         n = 2*m*ell
 
