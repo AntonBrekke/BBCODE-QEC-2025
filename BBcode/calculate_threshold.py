@@ -140,7 +140,8 @@ def plot_error_rates(analysis,
     # print(plt.rcParams.keys())
     plt.rcParams.update(params)
 
-    custom_cycle = ["#6667AB", "#C74375", "#F0C05A", "#009473", 'red', 'pink']
+    # Get colors from https://en.wikipedia.org/wiki/Pantone#Color_of_the_Year
+    custom_cycle = ["#6667AB", "#C74375", "#F0C05A", "#009473", '#0F4C81', '#9B1B30']
     plt.rcParams["axes.prop_cycle"] = plt.cycler(color=custom_cycle)
 
     fig, ax = plt.subplots(ncols=3, figsize=(15, 5))
@@ -289,7 +290,8 @@ def plot_compare_models(analysis1, analysis2,
     # print(plt.rcParams.keys())
     plt.rcParams.update(params)
 
-    custom_cycle = ["#6667AB", "#C74375", "#F0C05A", "#009473", 'red', 'pink']
+    # Get colors from https://en.wikipedia.org/wiki/Pantone#Color_of_the_Year
+    custom_cycle = ["#6667AB", "#C74375", "#F0C05A", "#009473", '#0F4C81', '#9B1B30']
     plt.rcParams["axes.prop_cycle"] = plt.cycler(color=custom_cycle)
 
     fig = plt.figure(figsize=(9, 5))
