@@ -20,16 +20,15 @@ from panqec.analysis import Analysis
 
 
 def simulate_code(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
-                        error_model_dict: dict = {'name': 'GaussianPauliErrorModel',  #  Class name of the error model
+                  error_model_dict: dict = {'name': 'GaussianPauliErrorModel',  #  Class name of the error model
                                                   'parameters': [{'r_x': 1/3, 'r_y': 1/3, 'r_z': 1/3}]},
-                        decoder_dict: dict = {'name': 'BeliefPropagationLSDDecoder',  #  Class name of the decoder
+                  decoder_dict: dict = {'name': 'BeliefPropagationLSDDecoder',  #  Class name of the decoder
                                               'parameters': [{'max_bp_iter': 1e3, 'lsd_order': 10, 
                                               'channel_update': False, 'bp_method': 'minimum_sum'}]}, 
-                        n_trials: int=1e2, 
-                        grids: list[dict]=[{'L_x':10,'L_y':10}],
-                        p_range: tuple=(0.1, 0.25, 40),
-                        ask_overwrite: bool=True
-                        ):
+                  n_trials: int=1e2, 
+                  grids: list[dict]=[{'L_x':10,'L_y':10}],
+                  p_range: tuple=(0.1, 0.25, 40),
+                  ask_overwrite: bool=True):
 
     n_trials = int(n_trials)  # Ensure n_trials is an integer
     p_min, p_max, n_points = p_range
@@ -58,10 +57,19 @@ def simulate_code(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     n_trials_str = f'{n_trials:.0e}'.replace('+0', '')
     grids_str = f'{grids}'.replace(' ', '').replace(':',';').replace(':', ';').replace("'", "").replace('_', '')
     p_range_str = f'{p_range}'.replace(' ', '')
-    error_model_dict_str = f'{error_model_dict}'.replace(' ', '').replace("'name':", '').replace(':', ';').replace("'", "").replace('_', '')
+    # Must copy and edit parameters from error_model_dict in a SAFE way. Trivial .copy() and edit does not work due to deepcopy
+    parameters_copy = error_model_dict['parameters'][0].copy()
+    rx = parameters_copy['r_x']
+    ry = parameters_copy['r_y']
+    rz = parameters_copy['r_z']
+    parameters_copy['r_x'] = f"{rx:.2f}"
+    parameters_copy['r_y'] = f"{ry:.2f}"
+    parameters_copy['r_z'] = f"{rz:.2f}"
+    parameters_str = f'[{parameters_copy}]'
+    error_model_dict_str = f'{error_model_dict}'.replace(f"{error_model_dict['parameters']}", parameters_str).replace(' ', '').replace("'name':", '').replace(':', ';').replace("'", "").replace('_', '')
     decoder_dict_str = f'{decoder_dict}'.replace(' ', '').replace("'name':", '').replace(':', ';').replace("'", "")
 
-    filename = f"data\{code_name};{grids_str};{error_model_dict_str};{decoder_dict_str};p_range;{p_range_str};n_trials;{n_trials_str}.json"
+    filename = f"data\{code_name};{grids_str};{error_model_dict_str};{decoder_dict_str}.json"
 
     # This magically fixes the fact that the filename is too long... 
     filename = u"\\\\?\\" + os.path.abspath(filename)
@@ -108,7 +116,11 @@ def simulate_code(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
     return analysis, filename 
 
 
-def plot_error_rates(analysis, savefig: bool=False, filename: str=None, include_threshold_estimate: bool=True):
+def plot_error_rates(analysis, 
+                     savefig: bool=False, 
+                     filename: str=None, 
+                     include_threshold_estimate: bool=True):
+    
     if filename is None:
         filename = 'figures/no_filename.pdf'
     ### Plot resulting data 
@@ -256,7 +268,10 @@ def plot_error_rates(analysis, savefig: bool=False, filename: str=None, include_
 
 
 
-def plot_compare_models(analysis1, analysis2, savefig=False):
+def plot_compare_models(analysis1, analysis2, 
+                        relevant_error_params: list=['r_x', 'r_y', 'r_z'], 
+                        relevant_decoder_params: list=['max_bp_iter', 'lsd_order'], 
+                        savefig=False):
     ### Plot resulting data 
     plt.style.use('seaborn-v0_8')
     # Comment back in to get LaTeX font 
@@ -332,9 +347,33 @@ def plot_compare_models(analysis1, analysis2, savefig=False):
     bias_label2 = str(biases2[0]).replace('inf', '\\infty')
     decoder2 = decoders2[0]
 
-    n_trials_str1 = f"{results1['n_trials'][0]:.0e}".replace('+0', '')
-    n_trials_str2 = f"{results2['n_trials'][0]:.0e}".replace('+0', '')
-    filename = f"figures\compare_{code_name1}_ntrials;{n_trials_str1}_{code_name2}_ntrials;{n_trials_str2}.pdf"
+    relevant_error_params = ['r_x', 'r_y', 'r_z']
+    error_params_dict1 = results1['error_model_params'][0]
+    relevant_error_param_dict1 = dict([(key, value if value%1==0 else f'{value:.2f}') for key, value in zip(error_params_dict1.keys(), error_params_dict1.values()) if key in relevant_error_params])
+    if len(relevant_error_param_dict1) == 0: relevant_error_param_dict_str1 = ''
+    else: relevant_error_param_dict_str1 = f"{relevant_error_param_dict1}"
+
+    error_params_dict2 = results2['error_model_params'][0]
+    relevant_error_param_dict2 = dict([(key, value if value%1==0 else f'{value:.2f}') for key, value in zip(error_params_dict2.keys(), error_params_dict2.values()) if key in relevant_error_params])
+    if len(relevant_error_param_dict2) == 0: relevant_error_param_dict_str2 = ''
+    else: relevant_error_param_dict_str2 = f"{relevant_error_param_dict2}"
+
+    relevant_decoder_params = ['gaussian']
+    decoder_params_dict1 = results1['decoder_params'][0]
+    relevant_decoder_param_dict1 = dict([(key, value) for key, value in zip(decoder_params_dict1.keys(), decoder_params_dict1.values()) if key in relevant_decoder_params])
+    if len(relevant_decoder_param_dict1) == 0: relevant_decoder_param_dict_str1 = ''
+    else: relevant_decoder_param_dict_str1 = f"{relevant_decoder_param_dict1}"
+
+    decoder_params_dict2 = results2['decoder_params'][0]
+    relevant_decoder_param_dict2 = dict([(key, value) for key, value in zip(decoder_params_dict2.keys(), decoder_params_dict2.values()) if key in relevant_decoder_params])
+    if len(relevant_decoder_param_dict2) == 0: relevant_decoder_param_dict_str2 = ''
+    else: relevant_decoder_param_dict_str2 = f"{relevant_decoder_param_dict2}"
+
+    error_params_str1 = f"{relevant_error_param_dict_str1}".replace("'", '').replace(':', ';').replace(' ', '')
+    error_params_str2 = f"{relevant_error_param_dict_str2}".replace("'", '').replace(':', ';').replace(' ', '')
+    decoder_params_str1 = f"{relevant_decoder_param_dict_str1}".replace("'", '').replace(':', ';').replace(' ', '')
+    decoder_params_str2 = f"{relevant_decoder_param_dict_str2}".replace("'", '').replace(':', ';').replace(' ', '')
+    filename = f"figures\compare_{code_name1}_{error_params_str1}_{decoder_params_str1}_{code_name2}_{error_params_str2}_{decoder_params_str2}.pdf"
 
     rewrite_plot = True
     if os.path.exists(filename) and savefig:
@@ -528,7 +567,7 @@ analysis1, filename1 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
                                   'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10, 'gaussian': True}]},
                     error_model_dict={'name': 'GaussianPauliErrorModel', 
-                                      'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+                                      'parameters': [{'r_x': 1/3, 'r_y': 1/3, 'r_z': 1/3}]},
                     n_trials=1e2, 
                     grids=[{'L_x':6,'L_y':6},
                            {'L_x': 12,'L_y':6},
@@ -541,7 +580,7 @@ analysis2, filename2 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
                                   'parameters': [{'max_bp_iter': int(1e3), 'lsd_order': 10, 'gaussian': False}]},
                     error_model_dict={'name': 'GaussianPauliErrorModel', 
-                                      'parameters': [{'r_x': 1, 'r_y': 0, 'r_z': 0}]},
+                                      'parameters': [{'r_x': 1/3, 'r_y': 1/3, 'r_z': 1/3}]},
                     n_trials=1e2, 
                     grids=[{'L_x':6,'L_y':6},
                            {'L_x': 12,'L_y':6},
@@ -550,4 +589,4 @@ analysis2, filename2 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
                     p_range=(0, 0.2, 40), 
                     ask_overwrite=True)
 
-plot_compare_models(analysis1, analysis2, savefig=True)
+plot_compare_models(analysis1, analysis2, relevant_error_params=['r_x', 'r_y', 'r_z'], relevant_decoder_params=['gaussian'], savefig=True)

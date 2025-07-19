@@ -87,25 +87,69 @@ class GaussianPauliErrorModel(BaseErrorModel):
         rng = np.random.default_rng() if rng is None else rng
 
         p_i, p_x, p_y, p_z = self.probability_distribution(code, error_rate)
-        r_x, r_y, r_z = self.direction
-        p = p_x[0]
+        px = p_x[0]
+        py = p_y[0]
+        pz = p_z[0]
         # sigma_x = newton(root_func, x0=1, args=(p,))
-        sigma_x = np.sqrt(np.pi/8) * 1/(erfinv(1-p))
+        sigma_x = np.sqrt(np.pi/8) * 1/(erfinv(1-px))
+        sigma_y = np.sqrt(np.pi/8) * 1/(erfinv(1-py))
+        sigma_z = np.sqrt(np.pi/8) * 1/(erfinv(1-pz))
 
         error_pauli = ''
         self.gaussian_error_data = []
         options = ('I', 'X', 'Y', 'Z')
         for i in range(code.n):
-            delta_x = rng.normal(0, sigma_x)
-            if abs(delta_x) < th: 
-                error_pauli += options[0]
-                delta = abs(delta_x)
+            delta_x = abs(rng.normal(0, sigma_x))
+            delta_y = abs(rng.normal(0, sigma_y))
+            delta_z = abs(rng.normal(0, sigma_z))
+            if (delta_x > th and delta_y < th and delta_z < th) or (delta_x < th and delta_y > th and delta_z > th):
+                error_pauli += 'X'
+                delta = delta_x
+                sigma = sigma_x
+            elif (delta_y > th and delta_x < th and delta_z < th) or (delta_y < th and delta_x > th and delta_z > th):
+                error_pauli += 'Y'
+                delta = delta_y
+                sigma = sigma_y
+            elif (delta_z > th and delta_x < th and delta_y < th) or (delta_z < th and delta_x > th and delta_y > th):
+                error_pauli += 'Z'
+                delta = delta_z
+                sigma = sigma_z
             else: 
-                error_pauli += options[1]
-                delta = np.sqrt(np.pi) - abs(delta_x)
+                error_pauli += 'I'
+                delta = np.sqrt(np.pi) - max(delta_x, delta_y, delta_z)
+                if delta == np.sqrt(np.pi)-delta_x: sigma = sigma_x
+                elif delta == np.sqrt(np.pi)-delta_y: sigma = sigma_y
+                else: sigma = sigma_z
 
-            likelihood_wrong = gaussian(np.sqrt(np.pi)-delta, sigma_x)
-            likelihood_correct = gaussian(delta, sigma_x)
+            # if delta_x > th and delta_x > delta_y and delta_x > delta_z:
+            #     error_pauli += 'X'
+            #     delta = delta_x
+            #     sigma = sigma_x
+            # elif delta_y > th and delta_y > delta_x and delta_y > delta_z:
+            #     error_pauli += 'Y'
+            #     delta = delta_y
+            #     sigma = sigma_y
+            # elif delta_z > th and delta_z > delta_x and delta_z > delta_y:
+            #     error_pauli += 'Z'
+            #     delta = delta_z
+            #     sigma = sigma_z
+            # else: 
+            #     error_pauli += 'I'
+            #     delta = np.sqrt(np.pi) - max(delta_x, delta_y, delta_z)
+            #     if delta == np.sqrt(np.pi)-delta_x: sigma = sigma_x
+            #     elif delta == np.sqrt(np.pi)-delta_y: sigma = sigma_y
+            #     else: sigma = sigma_z
+                # sigma = min(sigma_x, sigma_y, sigma_z)
+
+            # if delta_x < th: 
+            #     error_pauli += options[0]
+            #     delta = delta_x
+            # else: 
+            #     error_pauli += options[1]
+            #     delta = np.sqrt(np.pi) - delta_x
+
+            likelihood_wrong = gaussian(np.sqrt(np.pi)-delta, sigma)
+            likelihood_correct = gaussian(delta, sigma)
             normalization = likelihood_wrong + likelihood_correct
             # If sigma --> 0, delta --> 0 and hence f_inc = 0 and f_corr = infinity. Then p_correct = 1, and p_wrong = 0
             p_wrong = likelihood_wrong/normalization if normalization != 0.0 else 0.0
