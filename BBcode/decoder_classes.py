@@ -15,7 +15,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
                  code: StabilizerCode,
                  error_model: BaseErrorModel,
                  error_rate: float,
-                 gaussian: bool = False,    # only works if error_model has attribute 'gaussian_error_data', otherwise ignored
+                 gaussian: bool = True,    # only works if error_model has attribute 'gaussian_error_data', otherwise ignored
                  max_bp_iter: int = 1000,
                  channel_update: bool = False,
                  lsd_order: int = 10,
@@ -90,26 +90,24 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             self.z_decoder = BpLsdDecoder(
                 self.code.Hx,
                 error_rate=self.error_rate,
-                error_channel=self.error_channel_data,   # If both error_rate and error_channel is used, error_channel is prioritized by ldpc
+                error_channel=self.error_channel_data_X,   # If both error_rate and error_channel is used, error_channel is prioritized by ldpc
                 max_iter=self._max_bp_iter,
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
                 schedule="serial",
                 lsd_method="lsd_0",  # Choose from: "lsd_e", "lsd_cs", "lsd0"
-                lsd_order=self._osd_order
-            )
+                lsd_order=self._osd_order)
 
             self.x_decoder = BpLsdDecoder(
                 self.code.Hz,
                 error_rate=self.error_rate,
-                error_channel=self.error_channel_data,
+                error_channel=self.error_channel_data_Z,
                 max_iter=self._max_bp_iter,
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
                 schedule="serial",
                 lsd_method="lsd_0",  # Choose from: "lsd_e", "lsd_cs", "lsd0"
-                lsd_order=self._osd_order
-            )
+                lsd_order=self._osd_order)
 
         else:
             self.decoder = BpLsdDecoder(
@@ -120,16 +118,21 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
                 lsd_method="lsd_0",  # Choose from: "lsd_e", "lsd_cs", "lsd0"
-                osd_order=self._osd_order
-            )
+                osd_order=self._osd_order)
         self._initialized = True
 
     def decode(self, syndrome: np.ndarray, **kwargs) -> np.ndarray:
         """Get X and Z corrections given code and measured syndrome."""
 
-        if self.do_gaussian_decoding and hasattr(self.error_model, 'gaussian_error_data'):
-            self.error_channel_data = self.error_model.gaussian_error_data
-        else: self.error_channel_data = None
+        if self.do_gaussian_decoding and hasattr(self.error_model, 'gaussian_error_data_X'):
+            self.error_channel_data_X = self.error_model.gaussian_error_data_X
+        else: 
+            self.error_channel_data_X = None
+            
+        if self.do_gaussian_decoding and hasattr(self.error_model, 'gaussian_error_data_Z'):
+            self.error_channel_data_Z = self.error_model.gaussian_error_data_Z
+        else: 
+            self.error_channel_data_Z = None
 
         if not self._initialized:
             self.initialize_decoders()
@@ -144,13 +147,17 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
 
         pi, px, py, pz = self.get_probabilities()
 
-        if self.do_gaussian_decoding:
-            probabilities_x = self.error_channel_data
+        if self.error_channel_data_X is not None:
+            probabilities_x = self.error_channel_data_X
         else:
             # Y-errors also introduce X and Z-errors 
             probabilities_x = px + py
 
-        probabilities_z = pz + py
+        if self.error_channel_data_Z is not None:
+            probabilities_z = self.error_channel_data_Z
+        else:
+            # Y-errors also introduce X and Z-errors 
+            probabilities_z = pz + py
 
         probabilities = np.hstack([probabilities_z, probabilities_x])
 

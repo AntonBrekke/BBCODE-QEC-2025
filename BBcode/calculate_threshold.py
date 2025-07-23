@@ -141,6 +141,7 @@ def plot_error_rates(analysis,
     plt.rcParams.update(params)
 
     # Get colors from https://en.wikipedia.org/wiki/Pantone#Color_of_the_Year
+    # Very Peri, Fuchsia Rose, Mimosa, Emerald, Classic Blue, Chili Pepper
     custom_cycle = ["#6667AB", "#C74375", "#F0C05A", "#009473", '#0F4C81', '#9B1B30']
     plt.rcParams["axes.prop_cycle"] = plt.cycler(color=custom_cycle)
 
@@ -575,7 +576,7 @@ analysis1, filename1 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
                            {'L_x': 12,'L_y':6},
                            {'L_x': 18,'L_y':6},
                            {'L_x': 24,'L_y':6}],
-                    p_range=(0, 0.2, 40),
+                    p_range=(0, 0.3, 60),
                     ask_overwrite=True)
 
 analysis2, filename2 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
@@ -588,7 +589,8 @@ analysis2, filename2 = simulate_code(BBclass=BBcode.BBcode_A312_B312,
                            {'L_x': 12,'L_y':6},
                            {'L_x': 18,'L_y':6},
                            {'L_x': 24,'L_y':6}],
-                    p_range=(0, 0.2, 40), 
+                    p_range=(0, 0.3, 60), 
                     ask_overwrite=True)
 
 plot_compare_models(analysis1, analysis2, relevant_error_params=['r_x', 'r_y', 'r_z'], relevant_decoder_params=['gaussian'], savefig=True)
+# plot_error_rates(analysis1, savefig=False, filename=filename1.replace('data', 'figures').replace('.json', '.pdf'), include_threshold_estimate=True)
