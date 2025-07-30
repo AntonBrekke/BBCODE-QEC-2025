@@ -1,5 +1,5 @@
-import BBcode_classes 
-import decoder_classes 
+import source.BBcode_classes as BBcode_classes
+import source.decoder_classes as decoder_classes
 from panqec.gui import GUI
 
 

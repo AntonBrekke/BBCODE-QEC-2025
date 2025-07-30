@@ -1,6 +1,6 @@
-import BBcode_classes as BBcode
-from decoder_classes import BeliefPropagationLSDDecoder
-from errormodel_classes import GaussianPauliErrorModel
+import source.BBcode_classes as BBcode
+from source.decoder_classes import BeliefPropagationLSDDecoder
+from source.errormodel_classes import GaussianPauliErrorModel
 
 from panqec.config import CODES, DECODERS, ERROR_MODELS
 import numpy as np
@@ -500,10 +500,12 @@ def plot_compare_models(analysis1, analysis2,
     if savefig and rewrite_plot: plt.savefig(filename)
     plt.show()
 
+
+
+
 """
 Make function calls for analysis and plotting 
 """
-
 
 # analysis, filename = simulate_code(BBclass=BBcode.BBcode_A312_B312,
 #                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
