@@ -304,7 +304,7 @@ class BB2DCode(StabilizerCode):
     def stabilizer_representation(self, location, rotated_picture=False):
         # representation = super().stabilizer_representation(location, rotated_picture, json_file='BBcode.json')
 
-        json_file = '_BBcode.json'
+        json_file = 'BBcode.json'
         if json_file is None:
             json_file = os.path.join(
                 os.environ['PANQEC_ROOT_DIR'], 'codes', 'gui-config.json'

@@ -12,7 +12,7 @@ To be able to run every single file, you need the following libraries:
 
 ### BBcode
 - `GUI.py`
-    - This code visualizes the BBcodes implemented in the source folder using PanQEC's GUI. To generate the visuals, a .json file needs to be specified. For the `BB2DCode` class,  `_BBcode.json` is utilized and can be tweaked to change e.g. shapes and colors. 
+    - This code visualizes the BBcodes implemented in the source folder using PanQEC's GUI. To generate the visuals, a .json file needs to be specified. For the `BB2DCode` class,  `BBcode.json` is utilized and can be tweaked to change e.g. shapes and colors. 
 
 - `tanner_graph.py`
     - Visualizes tanner-graphs of specified BBcode. Imports `tanner_graph_qubit_space.py` and `tanner_graph_group_space.py` to visualize code both in physical and abstract space.
