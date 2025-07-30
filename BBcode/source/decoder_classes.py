@@ -7,6 +7,15 @@ from ldpc.bplsd_decoder import BpLsdDecoder
 from ldpc.bposd_decoder import BpOsdDecoder
 import numpy as np
 
+"""
+* Code written by Anton Brekke * 
+
+This file consists of 
+ - The decoder class "BeliefPropagationLSDDecoder" as a subclass of PanQEC's "BaseDecoder" class. 
+ 
+This class can use analog information from the "GaussianPauliErrorModel" class in the decoding process. 
+"""
+
 class BeliefPropagationLSDDecoder(BaseDecoder):
     label = 'BP-LSD decoder'
     allowed_codes = None  # all codes allowed

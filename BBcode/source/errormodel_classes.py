@@ -11,6 +11,16 @@ from scipy.optimize import newton
 from scipy.special import erf, erfinv
 from scipy.stats import truncnorm
 
+"""
+* Code written by Anton Brekke * 
+
+This file consists of 
+ - The decoder class "GaussianPauliErrorModel" as a subclass of PanQEC's "BaseErrorModel" class. 
+
+This class generates Pauli-errors by sampling displacements in position and momentum from a Gaussian distribution,
+inspired by the analog QEC from the GKP qubit. 
+"""
+
 # Define global variables
 th = np.sqrt(np.pi)/2
 

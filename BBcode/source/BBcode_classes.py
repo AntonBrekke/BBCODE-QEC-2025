@@ -10,14 +10,14 @@ import json
 * Code written by Anton Brekke * 
 
 This file consists of 
- - One superclass 'AntonBB2DCode' as a subclass of the PanQEC class 'StabilizerCode', 
-   implementing the Bivariate Bicycle (BB) code in 2D
- - A range of subclasses of 'AntonBB2DCode' making different examples of BB codes.
+ - One superclass 'BB2DCode' as a subclass of the PanQEC class "StabilizerCode", 
+   implementing the Bivariate Bicycle (BB) code in 2D.
+ - A range of subclasses of 'BB2DCode' making different examples of BB codes.
 If file is run as the main-file, you can view selected codes in a GUI. 
 """
 
 # Write own superclass for BBCode as a subclass of StabilizerCode
-class AntonBB2DCode(StabilizerCode):
+class BB2DCode(StabilizerCode):
     dimension = 2
     deformation_names = ['XZZX']
 
@@ -317,7 +317,7 @@ class AntonBB2DCode(StabilizerCode):
 
         # Want to overwrite code_name so sane .json file can be used for all subclasses 
         # code_name = self.id
-        code_name = 'AntonBB2DCode'
+        code_name = 'BB2DCode'
         picture = 'rotated' if rotated_picture else 'kitaev'
 
         representation = data[code_name]['stabilizers'][picture][stab_type]
@@ -343,7 +343,7 @@ class AntonBB2DCode(StabilizerCode):
 
         # Want to overwrite code_name so sane .json file can be used for all subclasses 
         # code_name = self.id
-        code_name = 'AntonBB2DCode'
+        code_name = 'BB2DCode'
         picture = 'rotated' if rotated_picture else 'kitaev'
 
         representation = data[code_name]['qubits'][picture]
@@ -358,8 +358,8 @@ class AntonBB2DCode(StabilizerCode):
     
 
 # Define subclasses for specific BB codes 
-# Takes Lx, Ly as parameters inherited from AntonBB2DCode
-class BBcode_Toric(AntonBB2DCode):
+# Takes Lx, Ly as parameters inherited from BB2DCode
+class BBcode_Toric(BB2DCode):
     """
     Make method 'get_AB' and define A and B matrices
     """
@@ -370,7 +370,7 @@ class BBcode_Toric(AntonBB2DCode):
         B = (I + x[1]) % 2
         return A, B
     
-class BBcode_ArXiV_example(AntonBB2DCode):
+class BBcode_ArXiV_example(BB2DCode):
     """
     Make method 'get_AB' and define A and B matrices
     This example works in the dual lattice, as they assign 'left'<--> A to vertical rather than horizontal. 
@@ -388,7 +388,7 @@ class BBcode_ArXiV_example(AntonBB2DCode):
         B = (y[1] + x[3] + x[4]) % 2
         return A, B
 
-class BBcode_A312_B312(AntonBB2DCode):
+class BBcode_A312_B312(BB2DCode):
     """
     Make method 'get_AB' and define A and B matrices
     """
@@ -401,7 +401,7 @@ class BBcode_A312_B312(AntonBB2DCode):
         B = (y[b1] + x[b2] + x[b3]) % 2
         return A, B
     
-class BBcode_Ay3x1x2_Bx3y7y2(AntonBB2DCode):
+class BBcode_Ay3x1x2_Bx3y7y2(BB2DCode):
     """
     Make method 'get_AB' and define A and B matrices
     """
