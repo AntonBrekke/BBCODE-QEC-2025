@@ -5,18 +5,22 @@ The implementation mainly uses functionality from the Python library `panqec` (p
 
 <img width="475.2" height="213.6" alt="image" src="https://github.com/user-attachments/assets/058833f8-9132-45b1-8462-0bf013b55ce0" />
 
-## Code-structure
-To run the code, you need the following libraries:
-`panqec`, `bposd`, `ldpc`, `tqdm`, `numpy`, `scipy`, `matplotlib`.
+## **Code-structure**
+To be able to run every single file, you need the following libraries:
 
-#### BBcode
+`panqec`, `bposd`, `ldpc`, `tqdm`, `networkx`, `numpy`, `scipy`, `matplotlib`.
+
+### BBcode
 - `GUI.py`
     - This code visualizes the BBcodes implemented in the source folder using PanQEC's GUI. To generate the visuals, a .json file needs to be specified. For the `BB2DCode` class,  `_BBcode.json` is utilized and can be tweaked to change e.g. shapes and colors. 
 
-- `analysis.py`
-    - WIP. 
+- `tanner_graph.py`
+    - Visualizes tanner-graphs of specified BBcode. Imports `tanner_graph_qubit_space.py` and `tanner_graph_group_space.py` to visualize code both in physical and abstract space.
 
-#### source
+- `analysis.py`
+    - Simulates and plots logical vs. physical error-rates for specified codes using tools from `PanQEC`. Resulting figures from this file end up in \figures.
+
+### source
 - `BBcode_classes.py` 
     - In this file you can implement your own BBcode by making a subclass of the `BB2DCode` class, which is a subclass of PanQEC's `StabilizerCode` class. This subclass only needs to contain the method `get_AB()`, where monomials A(x,y) and B(x,y) are specified.
 
@@ -25,3 +29,9 @@ To run the code, you need the following libraries:
 
 - `decoder_classes.py`
     - In this file you can make your own decoder class as a subclass of PanQEC's `BaseDecoder` class. To make use of the analog information generated in the `GaussianPauliErrorModel` class for decoding, the decoder class `BeliefPropagationLSDDecoder` is implemented in this file. This decoder uses Beleif Propagation (BP) with the Localized Statistics Decoding (LSD) algorithm using the `ldpc` library. 
+
+- `tanner_graph_group_space.py`
+    - Represents the qubit grid in the abstract group space of the BBcode. Walks in the grid are done by applying group elements given by the A and B monomials. Shows both checks and logical operators for X and Z. 
+
+- `tanner_graph_qubit_space.py`
+    - Represents the qubit grid with physical distances. Visualizes which qubits the X-check and Z-check uses for stabilizers. Works nicely with `GUI.py`, where you can highlight corresponding qubits to see that they are indeed stabilizers. 

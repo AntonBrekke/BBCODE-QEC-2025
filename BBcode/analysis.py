@@ -19,7 +19,7 @@ from panqec.simulation import read_input_dict
 from panqec.analysis import Analysis
 
 
-def simulate_code(BBclass: BBcode.AntonBB2DCode=BBcode.BBcode_Toric,
+def simulate_code(BBclass: BBcode.BB2DCode=BBcode.BBcode_Toric,
                   error_model_dict: dict = {'name': 'GaussianPauliErrorModel',  #  Class name of the error model
                                                   'parameters': [{'r_x': 1/3, 'r_y': 1/3, 'r_z': 1/3}]},
                   decoder_dict: dict = {'name': 'BeliefPropagationLSDDecoder',  #  Class name of the decoder
