@@ -9,14 +9,14 @@ The implementation mainly uses functionality from the Python library `panqec` (p
 To run the code, you need the following libraries:
 `panqec`, `bposd`, `ldpc`, `tqdm`, `numpy`, `scipy`, `matplotlib`.
 
-### BBcode
+#### BBcode
 - `GUI.py`
     - This code visualizes the BBcodes implemented in the source folder using PanQEC's GUI. To generate the visuals, a .json file needs to be specified. For the `BB2DCode` class,  `_BBcode.json` is utilized and can be tweaked to change e.g. shapes and colors. 
 
 - `analysis.py`
     - WIP. 
 
-### source
+#### source
 - `BBcode_classes.py` 
     - In this file you can implement your own BBcode by making a subclass of the `BB2DCode` class, which is a subclass of PanQEC's `StabilizerCode` class. This subclass only needs to contain the method `get_AB()`, where monomials A(x,y) and B(x,y) are specified.
 
