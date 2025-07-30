@@ -180,11 +180,11 @@ class AntonBB2DCode(StabilizerCode):
             """
             if layer == 'left':
                 # (odd, even) = horizontal edge 
-                qx = (2*cj+1) % (2*Lx)  # odd x
+                qx = (2*cj+1) % (2*Lx)  # odd x, even y -> horizontal
                 qy = (2*ci) % (2*Ly)  # even y
             else:
                 # (even, odd) = vertical edge
-                qx = (2*cj) % (2*Lx)  # even x
+                qx = (2*cj) % (2*Lx)  # even x, odd y -> vertical
                 qy = (2*ci+1) % (2*Ly)  # odd y
 
             if self.is_qubit((qx, qy)):
@@ -235,10 +235,10 @@ class AntonBB2DCode(StabilizerCode):
 
                 # lift back onto the doubled 2L×2L grid
                 if layer == 'left':
-                    qx = (2*cj+1) % (2*Lx)  # odd x, even y
+                    qx = (2*cj+1) % (2*Lx)  # odd x, even y -> horizontal
                     qy = (2*ci) % (2*Ly)
                 else:
-                    qx = (2*cj) % (2*Lx)  # even x, odd y
+                    qx = (2*cj) % (2*Lx)  # even x, odd y -> vertical
                     qy = (2*ci+1) % (2*Ly)
 
                 op[(qx, qy)] = 'X'
@@ -272,10 +272,10 @@ class AntonBB2DCode(StabilizerCode):
                 ci = idx % Ly
 
                 if layer == 'left':
-                    qx = (2*cj+1) % (2*Lx)
+                    qx = (2*cj+1) % (2*Lx)  # odd x, even y -> horizontal
                     qy = (2*ci) % (2*Ly)
                 else:
-                    qx = (2*cj) % (2*Lx)
+                    qx = (2*cj) % (2*Lx)    # even x, odd y -> vertical
                     qy = (2*ci+1) % (2*Ly)
 
                 op[(qx, qy)] = 'Z'
@@ -386,9 +386,6 @@ class BBcode_ArXiV_example(AntonBB2DCode):
         # They define 
         A = (x[1] + y[3] + y[4]) % 2
         B = (y[1] + x[3] + x[4]) % 2
-        # PanQEC convention forces us to instead do 
-        B = (x[1] + y[3] + y[4]) % 2
-        A = (y[1] + x[3] + x[4]) % 2
         return A, B
 
 class BBcode_A312_B312(AntonBB2DCode):
@@ -400,8 +397,8 @@ class BBcode_A312_B312(AntonBB2DCode):
         b1,b2,b3 = 3,1,2
         # Get x, y from superclass 
         x, y = self.x, self.y
-        A = (y[a1] + x[a2] + x[a3]) % 2
-        B = (x[b1] + y[b2] + y[b3]) % 2
+        A = (x[a1] + y[a2] + y[a3]) % 2
+        B = (y[b1] + x[b2] + x[b3]) % 2
         return A, B
     
 class BBcode_Ay3x1x2_Bx3y7y2(AntonBB2DCode):
@@ -413,8 +410,8 @@ class BBcode_Ay3x1x2_Bx3y7y2(AntonBB2DCode):
         b1,b2,b3 = 3,7,2
         # Get x, y from superclass 
         x, y = self.x, self.y
-        A = (y[a1] + x[a2] + x[a3]) % 2
-        B = (x[b1] + y[b2] + y[b3]) % 2
+        A = (x[a1] + y[a2] + y[a3]) % 2
+        B = (y[b1] + x[b2] + x[b3]) % 2
         return A, B
 
 if __name__ == '__main__':

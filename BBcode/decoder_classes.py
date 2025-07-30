@@ -44,10 +44,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
         }
 
     def get_probabilities(self):
-        pi, px, py, pz = self.error_model.probability_distribution(
-            self.code, self.error_rate
-        )
-
+        pi, px, py, pz = self.error_model.probability_distribution(self.code, self.error_rate)
         return pi, px, py, pz
 
     def update_probabilities(self, correction: np.ndarray,
@@ -79,7 +76,7 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             raise ValueError(
                 f"Unrecognized direction {direction} when "
                 "updating probabilities"
-            )
+                )
 
         return new_probs
 
@@ -113,7 +110,6 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             self.decoder = BpLsdDecoder(
                 self.code.stabilizer_matrix,
                 error_rate=self.error_rate,
-                error_channel=self.error_channel_data,
                 max_iter=self._max_bp_iter,
                 bp_method=self._bp_method,
                 ms_scaling_factor=0.,
@@ -192,7 +188,6 @@ class BeliefPropagationLSDDecoder(BaseDecoder):
             correction = self.decoder.decode(syndrome)
             # Relic from BPOSD
             # correction = self.decoder.osdw_decoding
-            correction = np.concatenate(
-                [correction[n_qubits:], correction[:n_qubits]]
-            )
+            correction = np.concatenate([correction[n_qubits:], correction[:n_qubits]])
+            
         return correction
