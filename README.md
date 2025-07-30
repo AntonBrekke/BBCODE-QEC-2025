@@ -1,5 +1,5 @@
 # Bivariate-Bicycle code
-This project implements the Bivariate-Bicycle (BB) code introduced by IBM Quantum in 2024 (see Bravyi et al. https://arxiv.org/pdf/2308.07915).
+This project implements the Bivariate-Bicycle (BB) code introduced by IBM Quantum in 2024 (see Bravyi et al. https://arxiv.org/pdf/2308.07915) in Python.
 
 The implementation mainly uses functionality from the Python library `panqec` (pronounced "pancake"), with additional usage of `ldpc` for decoding and `bposd` to extract logical operators. 
 
