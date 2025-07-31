@@ -43,10 +43,15 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                [x^1y^0, x^1y^1, x^1y^2, ..., x^1y^(m-1)], 
                ..., 
                [x^(ell-1)y^0, x^(ell-1)y^1, ..., x^(ell-1)y^(m-1)]]}
-    e.g. A(x, y) = x + x^2 + y^3
-    a_coeff = [[0,0,0,1], 
-               [1,0,0,0], 
-               [1,0,0,0]] 
+    e.g. A(x, y) = x + x^2 + y^3, B(x, y) = x^3 + y + y^2
+    a_coeff = [[0,0,0,1, ...], 
+               [1,0,0,0, ...], 
+               [1,0,0,0, ...], ... ] 
+    a_coeff = [[0,1,1, ...], 
+               [0,0,0, ...], 
+               [0,0,0, ...], 
+               [1,0,0, ...], ... ] 
+    where ... represents 0's filling in the remaining shape.
     """
     a_coefficients = np.zeros((ell, m), dtype=int)
     b_coefficients = np.zeros((ell, m), dtype=int)
@@ -70,14 +75,15 @@ def draw_bivariate_tanner_from_checks(fig, ax,
         "Find index of smallest and largest (k, l) for x^k*y^l with non-zero coeff in polynomial"
         nz = np.array(coeff.nonzero()).T  # list of (k,l)
         deg = nz.sum(axis=1)    # deg = k + l 
-        idx_min = np.argmin(deg)
-        idx_max = np.argmax(deg)
+        idx_min = np.argmin(deg)        # where nz has smallest k + l
+        idx_max = np.argmax(deg)        # where nz har largest k + l
+        # Return (k,l) such that k+l is smallest, (k,l) such that k+l is largest
         return tuple(nz[idx_min, :]), tuple(nz[idx_max, :])
     
     (a_k_min, a_l_min), (a_k_max, a_l_max) = factor(a_coefficients)
     (b_k_min, b_l_min), (b_k_max, b_l_max) = factor(b_coefficients)
-    x_max = max(a_k_max, b_k_max)   # Largest x-power
-    y_max = max(a_l_max, b_l_max)   # largest y-power 
+    x_max = max(a_k_max, b_k_max)   # Largest x-power in (A, B)
+    y_max = max(a_l_max, b_l_max)   # largest y-power in (A, B)
 
     # 3) Set up plot
     # fig, ax = plt.subplots(figsize=figsize)
@@ -94,17 +100,23 @@ def draw_bivariate_tanner_from_checks(fig, ax,
     def z_stabiliser(x, y): 
         return Rectangle((x, y), 0.1, 0.1, edgecolor="#47BE6B", facecolor='#47BE6B', zorder=3)
     def l_data(x, y): 
+        # bLue
         return Circle((x, y), 0.06, edgecolor='royalblue', facecolor='royalblue', zorder=3)
     def r_data(x, y): 
+        # oRange
         return Circle((x, y), 0.06, edgecolor="#F2C531", facecolor='#F2C531', zorder=3)
 
     # Draw nodes in grid
     for i in range(nx_cells):
         for j in range(ny_cells):
-            ax.add_patch(x_stabiliser(i+0.45, j-0.05))
-            ax.add_patch(z_stabiliser(i-0.05, j+0.45))
-            ax.add_patch(l_data(i+0.5, j+0.5))
-            ax.add_patch(r_data(i, j))
+            # ax.add_patch(x_stabiliser(i+0.5-0.05, j-0.05))
+            # ax.add_patch(z_stabiliser(i-0.05, j+0.5-0.05))
+            # ax.add_patch(l_data(i+0.5, j+0.5))
+            # ax.add_patch(r_data(i, j))
+            ax.add_patch(x_stabiliser(i+0.5-0.05, j+0.5-0.05))
+            ax.add_patch(z_stabiliser(i-0.05, j-0.05))
+            ax.add_patch(l_data(i+0.5, j))
+            ax.add_patch(r_data(i, j+0.5))
             ax.axvline(i, color='gray', alpha=0.05, zorder=-1)
             ax.axhline(j+0.5, color='gray', alpha=0.05, zorder=-1)
             ax.axvline(i+0.5, color='gray', alpha=0.05, zorder=-1)
@@ -137,7 +149,7 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     style = style_x(w)
                     if i == 5 and j == 3:
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([0.5+i, 0.5+i+dx], [j, 0.5+j-dy], color=style['color'])
+                            line, = ax.plot([0.5+i, 0.5+i+dx], [0.5+j, 1+j-dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else: 
                             lr = mpatches.FancyArrowPatch([0.5+i, j], [0.5+i+dx, 0.5+j-dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
@@ -152,10 +164,10 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     style = style_x(w)
                     if i == 5 and j == 3:
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([0.5+i, i+dx], [j, j-dy], color=style['color'])
+                            line, = ax.plot([0.5+i, i+dx], [0.5+j, 0.5+j-dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
-                            lr = mpatches.FancyArrowPatch([0.5+i, j], [i+dx, j-dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([0.5+i, 0.5+j], [i+dx, 0.5+j-dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
                             plt.gca().add_patch(lr)
 
     # 5) Draw Z-edges from A and B supports
@@ -169,12 +181,12 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     dx = k - a_k_min
                     dy = l - a_l_min
                     style = style_z(w)
-                    if i == 7 and j == 1:
+                    if i == 7 and j == 2:
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([i, i-dx], [0.5+j, j+dy], color=style['color'])
+                            line, = ax.plot([i, i-dx], [j, -0.5+j+dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
-                            lr = mpatches.FancyArrowPatch([i, 0.5+j], [i-dx, j+dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([i, j], [i-dx, -0.5+j+dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
                             plt.gca().add_patch(lr)
             # B-block Z edges
             for k in range(ell):
@@ -184,9 +196,9 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     dx = k - b_k_min
                     dy = l - b_l_min
                     style = style_z(w)
-                    if i == 7 and j == 1:
+                    if i == 7 and j == 2:
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([i, 0.5+i-dx], [0.5+j, 0.5+j+dy], color=style['color'])
+                            line, = ax.plot([i, 0.5+i-dx], [j, j+dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
                             lr = mpatches.FancyArrowPatch([i, 0.5+j], [0.5+i-dx, 0.5+j+dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
@@ -277,10 +289,10 @@ def plot_logicals(ax, hx, hz, ell, m, x_logical_idx=0, z_logical_idx=0, show_x=T
                 ni, nj = (i+dx)%ell, (j+dy)%m
                 if (ni,nj) in Z_nodes:
                     xi, yj = i, j 
-                    if (i+dx)>ell:
+                    if (i+dx)>ell-0.5:
                         ax.arrow(i+0.5, j, dx, dy, head_width=0, head_length=0, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
                         xi = (i+dx)%ell - dx
-                    if (j+dy)>m:
+                    if (j+dy)>m-0.5:
                         ax.arrow(i+0.5, j, dx, dy, head_width=0, head_length=0, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
                         yj = (j+dy)%m - dy
                     ax.arrow(xi+0.5, yj, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
@@ -292,13 +304,13 @@ def plot_logicals(ax, hx, hz, ell, m, x_logical_idx=0, z_logical_idx=0, show_x=T
                 ni, nj = (i+dx)%ell, (j+dy)%m
                 if (ni,nj) in Z_nodes:
                     xi, yj = i, j
-                    if (i+dx)>ell:
-                        ax.arrow(i, j, dx, dy, head_width=0, head_length=0, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
+                    if (i+dx)>ell-0.5:
+                        ax.arrow(i, j+0.5, dx, dy, head_width=0, head_length=0, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
                         xi = (i+dx)%ell - dx
-                    if (j+dy)>m:
-                        ax.arrow(i, j, dx, dy, head_width=0, head_length=0, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
+                    if (j+dy)>m-0.5:
+                        ax.arrow(i, j+0.5, dx, dy, head_width=0, head_length=0, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
                         yj = (j+dy)%m - dy
-                    ax.arrow(xi, yj, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
+                    ax.arrow(xi, yj+0.5, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_z, ec=col_log_z, linewidth=2, alpha=0.8, length_includes_head=True)
 
     # 4) Overlay *all* logical‐X loops (in ker H_X) using full_X_support
     for vec in logicals_x:
@@ -312,13 +324,13 @@ def plot_logicals(ax, hx, hz, ell, m, x_logical_idx=0, z_logical_idx=0, show_x=T
                 ni, nj = (i+dx)%ell, (j+dy)%m
                 if (ni,nj) in X_nodes:
                     xi, yj = i, j
-                    if (i+dx)>ell:
-                        ax.arrow(i, j+0.5, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
+                    if (i+dx)>ell-0.5:
+                        ax.arrow(i+0.5, j, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
                         xi = (i+dx)%ell - dx
-                    if (j+dy)>m:
-                        ax.arrow(i, j+0.5, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
+                    if (j+dy)>m-0.5:
+                        ax.arrow(i+0.5, j, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
                         yj = (j+dy)%m - dy
-                    ax.arrow(xi, yj+0.5, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
+                    ax.arrow(xi+0.5, yj, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
 
         idxs = np.nonzero(vec[n2:])[0]
         X_nodes = {(idx//m, idx%m) for idx in idxs}  # set of (i,j), ith column, jth row
@@ -327,13 +339,13 @@ def plot_logicals(ax, hx, hz, ell, m, x_logical_idx=0, z_logical_idx=0, show_x=T
                 ni, nj = (i+dx)%ell, (j+dy)%m
                 if (ni,nj) in X_nodes:
                     xi, yj = i, j
-                    if (i+dx)>ell:
-                        ax.arrow(i, j, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
+                    if (i+dx)>ell-0.5:
+                        ax.arrow(i, j+0.5, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
                         xi = (i+dx)%ell - dx
-                    if (j+dy)>m:
-                        ax.arrow(i, j, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
+                    if (j+dy)>m-0.5:
+                        ax.arrow(i, j+0.5, dx, dy, head_width=0, head_length=0, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
                         yj = (j+dy)%m - dy
-                    ax.arrow(xi, yj, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
+                    ax.arrow(xi, yj+0.5, dx, dy, head_width=0.1, head_length=0.1, fc=col_log_x, ec=col_log_x, linewidth=2, alpha=0.8, length_includes_head=True)
 
 
 

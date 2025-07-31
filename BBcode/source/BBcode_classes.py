@@ -23,7 +23,7 @@ class BB2DCode(StabilizerCode):
 
     def __init__(self, L_x, L_y=None):
         if L_y is None: L_y = L_x
-        # L_x, L_y = 6, 12
+        L_x, L_y = 12, 6
         super().__init__(L_x, L_y)
 
         ell, m = L_x, L_y
@@ -389,6 +389,11 @@ class BBcode_ArXiV_example(BB2DCode):
         return A, B
 
 class BBcode_A312_B312(BB2DCode):
+    # If you want to change grid to rectangular in GUI, define own init and overwrite
+    def __init__(self, L_x, L_y=None):
+        if L_y is None: L_y = L_x
+        # L_x, L_y = 12, 6
+        super().__init__(L_x, L_y)
     """
     Make method 'get_AB' and define A and B matrices
     """
