@@ -6,6 +6,12 @@ import matplotlib.patches as mpatches
 from matplotlib.widgets import Button
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+"""
+Group space refers to the space abstract indexing/labelling of qubits,
+derived from the BBcode article https://arxiv.org/pdf/2308.07915. Here, qubits are
+connected by group elements, and the indexing is non-trivial.
+"""
+
 def draw_bivariate_tanner_from_checks(fig, ax,
                                      hx: np.ndarray,
                                      hz: np.ndarray,
@@ -147,12 +153,12 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     dx = k - a_k_min
                     dy = l - a_l_min
                     style = style_x(w)
-                    if i == 5 and j == 3:
+                    if i == int(ell//2-1) and j == int(m//2):
                         if (dx, dy) in short_offsets or True:
                             line, = ax.plot([0.5+i, 0.5+i+dx], [0.5+j, 1+j-dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else: 
-                            lr = mpatches.FancyArrowPatch([0.5+i, j], [0.5+i+dx, 0.5+j-dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([0.5+i, 0.5+j], [0.5+i+dx, 1+j-dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
                             plt.gca().add_patch(lr)
             # B-block X edges
             for k in range(ell):
@@ -162,7 +168,7 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     dx = k - b_k_min
                     dy = l - b_l_min
                     style = style_x(w)
-                    if i == 5 and j == 3:
+                    if i == int(ell//2-1) and j == int(m//2):
                         if (dx, dy) in short_offsets or True:
                             line, = ax.plot([0.5+i, i+dx], [0.5+j, 0.5+j-dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
@@ -181,7 +187,7 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     dx = k - a_k_min
                     dy = l - a_l_min
                     style = style_z(w)
-                    if i == 7 and j == 2:
+                    if i == int(ell//2+1) and j == int(m//2-1):
                         if (dx, dy) in short_offsets or True:
                             line, = ax.plot([i, i-dx], [j, -0.5+j+dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
@@ -196,29 +202,29 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     dx = k - b_k_min
                     dy = l - b_l_min
                     style = style_z(w)
-                    if i == 7 and j == 2:
+                    if i == int(ell//2+1) and j == int(m//2-1):
                         if (dx, dy) in short_offsets or True:
                             line, = ax.plot([i, 0.5+i-dx], [j, j+dy], color=style['color'])
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
-                            lr = mpatches.FancyArrowPatch([i, 0.5+j], [0.5+i-dx, 0.5+j+dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([i, j], [0.5+i-dx, j+dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
                             plt.gca().add_patch(lr)
 
     # 6) Draw boundary arrows
-    ax.plot([-0.25, -0.25], [-0.25, ny_cells-0.25], color='black', linewidth=0.7)
+    ax.plot([-0.25, -0.25], [-0.25, ny_cells-0.25], color='black', linewidth=1)
     ax.arrow(-0.25, -0.25, 0, ny_cells/2, head_width=0.1, head_length=0.1,
              color='black', linewidth=0.05)
-    ax.plot([-0.25, nx_cells-0.25], [-0.25, -0.25], color='black', linewidth=0.7)
+    ax.plot([-0.25, nx_cells-0.25], [-0.25, -0.25], color='black', linewidth=1)
     ax.arrow(-0.25, -0.25, (nx_cells)/2-0.05, 0, head_width=0.1, head_length=0.1,
              color='black', linewidth=0.05)
     ax.arrow(-0.25, -0.25, (nx_cells)/2+0.05, 0, head_width=0.1, head_length=0.1,
              color='black', linewidth=0.05)
-    ax.plot([-0.25, nx_cells-0.25], [ny_cells-0.25, ny_cells-0.25], color='black', linewidth=0.7)
+    ax.plot([-0.25, nx_cells-0.25], [ny_cells-0.25, ny_cells-0.25], color='black', linewidth=1)
     ax.arrow(-0.25, ny_cells-0.25, (nx_cells)/2-0.05, 0, head_width=0.1, head_length=0.1,
              color='black', linewidth=0.05)
     ax.arrow(-0.25, ny_cells-0.25, (nx_cells)/2+0.05, 0, head_width=0.1, head_length=0.1,
              color='black', linewidth=0.05)
-    ax.plot([nx_cells-0.25, nx_cells-0.25], [-0.25, ny_cells-0.25], color='black', linewidth=0.7)
+    ax.plot([nx_cells-0.25, nx_cells-0.25], [-0.25, ny_cells-0.25], color='black', linewidth=1)
     ax.arrow(nx_cells-0.25, -0.25, 0, ny_cells/2, head_width=0.1, head_length=0.1,
              color='black', linewidth=0.05)
 

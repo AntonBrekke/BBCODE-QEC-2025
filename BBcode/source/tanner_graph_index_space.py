@@ -2,6 +2,11 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
+Index space refers to the space when each qubit is given an index, 
+counting from left to right and top to bottom. This is the convention used in the PanQEC library.
+"""
+
 def make_tanner_graph(A, B, ell, m):
     # Create an empty graph
     G = nx.Graph()

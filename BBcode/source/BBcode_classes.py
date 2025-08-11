@@ -23,7 +23,7 @@ class BB2DCode(StabilizerCode):
 
     def __init__(self, L_x, L_y=None):
         if L_y is None: L_y = L_x
-        L_x, L_y = 12, 6
+        # L_x, L_y = 12, 6
         super().__init__(L_x, L_y)
 
         ell, m = L_x, L_y
@@ -78,7 +78,7 @@ class BB2DCode(StabilizerCode):
         # Number of logical qubits, must be non-zero
         self.num_logical_qubits = n - rank2(self.HX) - rank2(self.HZ)
         # Is zero of rank2(H) = n/2 <=> k = 2*dim(ker(A)\cap ker(B)) e.g. no overlap between A and B kernel
-        print(f'Number of logical qubits: {self.num_logical_qubits}')
+        # print(f'Number of logical qubits: {self.num_logical_qubits}')
 
         qcode=css_code(self.HX, self.HZ)
         self.qcode = qcode
@@ -368,6 +368,7 @@ class BBcode_Toric(BB2DCode):
         I, x, y = self.I, self.x, self.y
         A = (I + y[1]) % 2
         B = (I + x[1]) % 2
+        
         return A, B
     
 class BBcode_ArXiV_example(BB2DCode):
@@ -420,6 +421,20 @@ class BBcode_Ay3x1x2_Bx3y7y2(BB2DCode):
         return A, B
 
 if __name__ == '__main__':
+
+    def prime_factors(n):
+        i = 2
+        factors = []
+        while i * i <= n:
+            if n % i:
+                i += 1
+            else:
+                n //= i
+                factors.append(i)
+        if n > 1:
+            factors.append(n)
+        return '*'.join(map(str, factors))
+
     # Visualize the code in the GUI
 
     from decoder_classes import BeliefPropagationLSDDecoder
@@ -433,4 +448,19 @@ if __name__ == '__main__':
 
     gui.add_decoder(BeliefPropagationLSDDecoder, 'BeliefPropagationLSDDecoder')
 
+    BBcode_A312_B312(13, 13)
+
+    for i in range(4, 25):
+        for j in range(4, 25):
+            c = BBcode_A312_B312(i, j)
+            if c.num_logical_qubits % 2 == 0 and c.num_logical_qubits > 0:
+                num_toric_codes = c.num_logical_qubits//2
+                num_qubit_BB = 2*i*j
+                num_qubit_pr_toric = num_qubit_BB / num_toric_codes
+                if num_qubit_pr_toric % 2 == 0:
+                    gui.add_code(c, f'BBcode-A312-B312-{i}x{j}')
+                print((i,j), num_toric_codes, num_qubit_BB, int(num_qubit_pr_toric//2), prime_factors(int(num_qubit_pr_toric//2)))
+                print(f'Number of logical qubits: {c.num_logical_qubits}')
+                
     gui.run(port=5000)
+
