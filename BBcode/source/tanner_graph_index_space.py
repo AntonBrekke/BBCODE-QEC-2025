@@ -109,7 +109,7 @@ def make_tanner_graph(A, B, ell, m):
     nx.draw_networkx_nodes(G, pos, nodelist=q_nodes, node_color=q_nodes_colors, alpha=0.85, node_size=100)
     nx.draw_networkx_nodes(G, pos, nodelist=x_nodes, node_color="#F95F5F", alpha=0.85, node_size=100, node_shape='s')
     nx.draw_networkx_nodes(G, pos, nodelist=z_nodes, node_color="#37C656", alpha=0.85, node_size=100, node_shape='s')
-    nx.draw_networkx_edges(G, pos, edge_color=edges_colors, width=3, connectionstyle="arc3,rad=0.11", arrows=True, arrowstyle='-')
+    nx.draw_networkx_edges(G, pos, edge_color=edges_colors, width=2.5, connectionstyle="arc3,rad=0.11", arrows=True, arrowstyle='-')
     # Uncomment to get labelling/indexing of qubit grid
     nx.draw_networkx_labels(G, pos, font_size=5, font_color='black')
 

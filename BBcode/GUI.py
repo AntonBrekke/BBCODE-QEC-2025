@@ -1,4 +1,5 @@
 import source.BBcode_classes as BBcode_classes
+import source.TileCode_classes as TileCode_classes
 import source.decoder_classes as decoder_classes
 from panqec.gui import GUI
 
@@ -16,6 +17,12 @@ code_class_dict = {}
 for name, cls in BBcode_classes.__dict__.items():
     if isinstance(cls, type) and issubclass(cls, BBcode_classes.BB2DCode) and name != 'BB2DCode':
         code_class_dict[name] = cls
+        gui.add_code(cls, name)
+
+code_class_dict_TileCode = {}
+for name, cls in TileCode_classes.__dict__.items():
+    if isinstance(cls, type) and issubclass(cls, TileCode_classes.TileCode) and name != 'TileCode':
+        code_class_dict_TileCode[name] = cls
         gui.add_code(cls, name)
 
 decoder_dict = {}

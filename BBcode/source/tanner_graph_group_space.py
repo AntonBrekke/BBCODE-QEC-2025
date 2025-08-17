@@ -93,8 +93,8 @@ def draw_bivariate_tanner_from_checks(fig, ax,
 
     # 3) Set up plot
     # fig, ax = plt.subplots(figsize=figsize)
-    ax.set_xlim(-0.3, nx_cells-0.2)
-    ax.set_ylim(-0.3, ny_cells-0.2)
+    ax.set_xlim(-0.4, nx_cells-0.1)
+    ax.set_ylim(-0.4, ny_cells-0.1)
     ax.set_aspect('equal', adjustable='box')
     ax.set_axis_off()
     if name:
@@ -143,6 +143,7 @@ def draw_bivariate_tanner_from_checks(fig, ax,
 
     # 4) Draw X-edges from A and B supports
     # Add margins to x_max, y_max to make sure support is drawn
+    lw_check_lines = 1.5
     for i in range(-x_max, x_max + nx_cells):
         for j in range(-y_max, y_max + ny_cells):
             # A-block X edges
@@ -155,10 +156,10 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     style = style_x(w)
                     if i == int(ell//2-1) and j == int(m//2):
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([0.5+i, 0.5+i+dx], [0.5+j, 1+j-dy], color=style['color'])
+                            line, = ax.plot([0.5+i, 0.5+i+dx], [0.5+j, 1+j-dy], color=style['color'], lw=lw_check_lines)
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else: 
-                            lr = mpatches.FancyArrowPatch([0.5+i, 0.5+j], [0.5+i+dx, 1+j-dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([0.5+i, 0.5+j], [0.5+i+dx, 1+j-dy], connectionstyle="arc3,rad=-0.1", color='k', lw=lw_check_lines)
                             plt.gca().add_patch(lr)
             # B-block X edges
             for k in range(ell):
@@ -170,10 +171,10 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     style = style_x(w)
                     if i == int(ell//2-1) and j == int(m//2):
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([0.5+i, i+dx], [0.5+j, 0.5+j-dy], color=style['color'])
+                            line, = ax.plot([0.5+i, i+dx], [0.5+j, 0.5+j-dy], color=style['color'], lw=lw_check_lines)
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
-                            lr = mpatches.FancyArrowPatch([0.5+i, 0.5+j], [i+dx, 0.5+j-dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([0.5+i, 0.5+j], [i+dx, 0.5+j-dy], connectionstyle="arc3,rad=0.1", color='k', lw=lw_check_lines)
                             plt.gca().add_patch(lr)
 
     # 5) Draw Z-edges from A and B supports
@@ -189,10 +190,10 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     style = style_z(w)
                     if i == int(ell//2+1) and j == int(m//2-1):
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([i, i-dx], [j, -0.5+j+dy], color=style['color'])
+                            line, = ax.plot([i, i-dx], [j, -0.5+j+dy], color=style['color'], lw=lw_check_lines)
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
-                            lr = mpatches.FancyArrowPatch([i, j], [i-dx, -0.5+j+dy], connectionstyle="arc3,rad=-0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([i, j], [i-dx, -0.5+j+dy], connectionstyle="arc3,rad=-0.1", color='k', lw=lw_check_lines)
                             plt.gca().add_patch(lr)
             # B-block Z edges
             for k in range(ell):
@@ -204,29 +205,25 @@ def draw_bivariate_tanner_from_checks(fig, ax,
                     style = style_z(w)
                     if i == int(ell//2+1) and j == int(m//2-1):
                         if (dx, dy) in short_offsets or True:
-                            line, = ax.plot([i, 0.5+i-dx], [j, j+dy], color=style['color'])
+                            line, = ax.plot([i, 0.5+i-dx], [j, j+dy], color=style['color'], lw=lw_check_lines)
                             if style['dashes']: line.set_dashes(style['dashes'])
                         else:
-                            lr = mpatches.FancyArrowPatch([i, j], [0.5+i-dx, j+dy], connectionstyle="arc3,rad=0.1", color='k', lw=1.5)
+                            lr = mpatches.FancyArrowPatch([i, j], [0.5+i-dx, j+dy], connectionstyle="arc3,rad=0.1", color='k', lw=lw_check_lines)
                             plt.gca().add_patch(lr)
 
     # 6) Draw boundary arrows
+    # Vertical
     ax.plot([-0.25, -0.25], [-0.25, ny_cells-0.25], color='black', linewidth=1)
-    ax.arrow(-0.25, -0.25, 0, ny_cells/2, head_width=0.1, head_length=0.1,
-             color='black', linewidth=0.05)
     ax.plot([-0.25, nx_cells-0.25], [-0.25, -0.25], color='black', linewidth=1)
-    ax.arrow(-0.25, -0.25, (nx_cells)/2-0.05, 0, head_width=0.1, head_length=0.1,
-             color='black', linewidth=0.05)
-    ax.arrow(-0.25, -0.25, (nx_cells)/2+0.05, 0, head_width=0.1, head_length=0.1,
-             color='black', linewidth=0.05)
+    ax.arrow(-0.25, -0.25, 0, (ny_cells-0.25)/2, head_width=0.2, head_length=0.2, color='black', linewidth=0.05)
+    ax.arrow(nx_cells-0.25, -0.25, 0, (ny_cells-0.25)/2, head_width=0.2, head_length=0.2, color='black', linewidth=0.05)
+    # Horizontal
     ax.plot([-0.25, nx_cells-0.25], [ny_cells-0.25, ny_cells-0.25], color='black', linewidth=1)
-    ax.arrow(-0.25, ny_cells-0.25, (nx_cells)/2-0.05, 0, head_width=0.1, head_length=0.1,
-             color='black', linewidth=0.05)
-    ax.arrow(-0.25, ny_cells-0.25, (nx_cells)/2+0.05, 0, head_width=0.1, head_length=0.1,
-             color='black', linewidth=0.05)
+    ax.arrow(-0.25, -0.25, (nx_cells-0.25)/2-0.02, 0, head_width=0.2, head_length=0.2, color='black', linewidth=0.05)
+    ax.arrow(-0.25, -0.25, (nx_cells-0.25)/2+0.12, 0, head_width=0.2, head_length=0.2,color='black', linewidth=0.05)
     ax.plot([nx_cells-0.25, nx_cells-0.25], [-0.25, ny_cells-0.25], color='black', linewidth=1)
-    ax.arrow(nx_cells-0.25, -0.25, 0, ny_cells/2, head_width=0.1, head_length=0.1,
-             color='black', linewidth=0.05)
+    ax.arrow(-0.25, ny_cells-0.25, (nx_cells-0.25)/2-0.02, 0, head_width=0.2, head_length=0.2, color='black', linewidth=0.05)
+    ax.arrow(-0.25, ny_cells-0.25, (nx_cells-0.25)/2+0.12, 0, head_width=0.2, head_length=0.2, color='black', linewidth=0.05)
 
     # 7) Legend
     handles = [Patch(color='lightcoral'), Patch(color='#47BE6B'),

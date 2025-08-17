@@ -23,7 +23,7 @@ class BB2DCode(StabilizerCode):
 
     def __init__(self, L_x, L_y=None):
         if L_y is None: L_y = L_x
-        # L_x, L_y = 12, 6
+        # L_x, L_y = 8, 6
         super().__init__(L_x, L_y)
 
         ell, m = L_x, L_y
@@ -304,7 +304,7 @@ class BB2DCode(StabilizerCode):
     def stabilizer_representation(self, location, rotated_picture=False):
         # representation = super().stabilizer_representation(location, rotated_picture, json_file='BBcode.json')
 
-        json_file = 'BBcode.json'
+        json_file = 'js\BBcode.json'
         if json_file is None:
             json_file = os.path.join(
                 os.environ['PANQEC_ROOT_DIR'], 'codes', 'gui-config.json'
@@ -332,7 +332,7 @@ class BB2DCode(StabilizerCode):
 
     def qubit_representation(self, location, rotated_picture=False):
         # representation = super().qubit_representation(location, rotated_picture, json_file='BBcode.json')
-        json_file = 'BBcode.json'
+        json_file = 'js\BBcode.json'
         if json_file is None:
             json_file = os.path.join(
                 os.environ['PANQEC_ROOT_DIR'], 'codes', 'gui-config.json'
@@ -368,7 +368,7 @@ class BBcode_Toric(BB2DCode):
         I, x, y = self.I, self.x, self.y
         A = (I + y[1]) % 2
         B = (I + x[1]) % 2
-        
+
         return A, B
     
 class BBcode_ArXiV_example(BB2DCode):
@@ -450,17 +450,20 @@ if __name__ == '__main__':
 
     BBcode_A312_B312(13, 13)
 
-    for i in range(4, 25):
-        for j in range(4, 25):
+    num_toric_logicals = 2 
+    for i in range(6, 30):
+        # Symmetric in (i,j) 
+        for j in range(i, 30):
             c = BBcode_A312_B312(i, j)
             if c.num_logical_qubits % 2 == 0 and c.num_logical_qubits > 0:
-                num_toric_codes = c.num_logical_qubits//2
+            # if c.num_logical_qubits == 8:
+                num_toric_codes = c.num_logical_qubits//num_toric_logicals
                 num_qubit_BB = 2*i*j
                 num_qubit_pr_toric = num_qubit_BB / num_toric_codes
                 if num_qubit_pr_toric % 2 == 0:
-                    gui.add_code(c, f'BBcode-A312-B312-{i}x{j}')
-                print((i,j), num_toric_codes, num_qubit_BB, int(num_qubit_pr_toric//2), prime_factors(int(num_qubit_pr_toric//2)))
-                print(f'Number of logical qubits: {c.num_logical_qubits}')
+                    Lx_times_Ly_toric = prime_factors(int(num_qubit_pr_toric//2))
+                    print((i,j), num_toric_codes, num_qubit_BB, int(num_qubit_pr_toric//2), Lx_times_Ly_toric)
+                    print(f'Number of logical qubits: {c.num_logical_qubits}')
                 
     gui.run(port=5000)
 
