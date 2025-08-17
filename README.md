@@ -31,7 +31,7 @@ To be able to run every single file, you need the following libraries:
 
 ### source
 - `BBcode_classes.py` 
-    - In this file you can implement your own BBcode by making a subclass of the `BB2DCode` class, which is a subclass of PanQEC's `StabilizerCode` class. This subclass only needs to contain the method `get_AB()`, where monomials A(x,y) and B(x,y) are specified.
+    - In this file you can implement your own BBcode by making a subclass of the `BB2DCode` class, which is a subclass of PanQEC's `StabilizerCode` class. This subclass only needs to contain the method `get_AB()`, where polynomials A(x,y) and B(x,y) are specified.
 
 - `TileCode_classes.py` 
     - In this file you can implement your own TileCode. Original code belongs to https://github.com/Bragit123/QEC, read about the code here for more information. 
