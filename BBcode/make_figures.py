@@ -7,12 +7,9 @@ from src.analysis import simulate_code, plot_error_rates, plot_compare_models, p
 """
 * Code written by Anton Brekke * 
 
-This file calculates the error threshold given a BBCode class from 'BBcode_classes.py'. 
+This file makes figures bases on codes simulated by analysis.py and stores figures in the "figures" folder. 
 """
 
-"""
-Make function calls for analysis and plotting 
-"""
 
 # analysis, filename = simulate_code(BBclass=BBcode.BBcode_A312_B312,
 #                     decoder_dict={'name': 'BeliefPropagationLSDDecoder',
