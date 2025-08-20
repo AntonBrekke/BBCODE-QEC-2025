@@ -1,13 +1,13 @@
-import source.BBcode_classes as BBcode_classes
-import source.TileCode_classes as TileCode_classes
-import source.decoder_classes as decoder_classes
+import src.BBcode_classes as BBcode_classes
+import src.TileCode_classes as TileCode_classes
+import src.decoder_classes as decoder_classes
 from panqec.gui import GUI
 
 
 """
 * Code written by Anton Brekke * 
 
-This file runs all BBcodes and decoders made in the "source" folder, and visualizes it in PanQEC's GUI. 
+This file runs all BBcodes and decoders made in the "src" folder, and visualizes it in PanQEC's GUI. 
 To visualize the grid, a .json file is needed. The class "BB2DCode" makes use of _BBCode.json. 
 """
 

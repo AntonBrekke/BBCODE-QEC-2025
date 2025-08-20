@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 from typing import Union 
 
-import source.BBcode_classes as BBcode
-from source.decoder_classes import BeliefPropagationLSDDecoder
-from source.errormodel_classes import GaussianPauliErrorModel
+import src.BBcode_classes as BBcode
+from src.decoder_classes import BeliefPropagationLSDDecoder
+from src.errormodel_classes import GaussianPauliErrorModel
 
 ### Calculate threshold and get error-rate plot 
 from panqec.simulation import read_input_dict

@@ -1,8 +1,8 @@
-import source.BBcode_classes as BBcode
-import source.TileCode_classes as TileCode
+import src.BBcode_classes as BBcode
+import src.TileCode_classes as TileCode
 from panqec.codes import Toric2DCode
 
-from source.analysis import simulate_code, plot_error_rates, plot_compare_models, plot_all
+from src.analysis import simulate_code, plot_error_rates, plot_compare_models, plot_all
 
 """
 * Code written by Anton Brekke * 

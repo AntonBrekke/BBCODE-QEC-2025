@@ -14,13 +14,13 @@ To be able to run every single file, you need the following libraries:
 
 ### BBcode
 - `GUI.py`
-    - This code visualizes the BBcodes implemented in the source folder using PanQEC's GUI. To generate the visuals, a .json file needs to be specified. For the `BB2DCode` class,  `BBcode.json` is utilized and can be tweaked to change e.g. shapes and colors. 
+    - This code visualizes the BBcodes implemented in the `src` folder using PanQEC's GUI. To generate the visuals, a .json file needs to be specified. For the `BB2DCode` class,  `BBcode.json` is utilized and can be tweaked to change e.g. shapes and colors. 
 
 - `tanner_graph.py`
     - Visualizes tanner-graphs of specified BBcode. Imports `tanner_graph_qubit_space.py` and `tanner_graph_group_space.py` to visualize code both in physical and abstract space.
 
 - `make_figs.py`
-    - Imports `analysis.py` from source to run simulations and make figures. Mainly to separate source code from interface. 
+    - Imports `analysis.py` from `src` to run simulations and make figures. Mainly to separate source code from interface. 
 
 ### js
 - `BBcode.json`
@@ -29,7 +29,7 @@ To be able to run every single file, you need the following libraries:
 - `TileCode.json`
     - Specifies how the code should render in the GUI from `GUI.py` for TileCode. Specify shapes, colors etc.
 
-### source
+### src
 - `BBcode_classes.py` 
     - In this file you can implement your own BBcode by making a subclass of the `BB2DCode` class, which is a subclass of PanQEC's `StabilizerCode` class. This subclass only needs to contain the method `get_AB()`, where polynomials A(x,y) and B(x,y) are specified.
 

@@ -1,6 +1,6 @@
-import source.tanner_graph_index_space as tgi
-import source.tanner_graph_group_space as tgg
-import source.BBcode_classes as BBcode
+import src.tanner_graph_index_space as tgi
+import src.tanner_graph_group_space as tgg
+import src.BBcode_classes as BBcode
 import matplotlib.pyplot as plt 
 import numpy as np
 
